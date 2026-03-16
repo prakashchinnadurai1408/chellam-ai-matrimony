@@ -14,7 +14,165 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      partner_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          max_age: number | null
+          max_height: string | null
+          min_age: number | null
+          min_height: string | null
+          preferred_communities: string[] | null
+          preferred_education: string[] | null
+          preferred_locations: string[] | null
+          preferred_marital_status: string | null
+          preferred_religion: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_age?: number | null
+          max_height?: string | null
+          min_age?: number | null
+          min_height?: string | null
+          preferred_communities?: string[] | null
+          preferred_education?: string[] | null
+          preferred_locations?: string[] | null
+          preferred_marital_status?: string | null
+          preferred_religion?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_age?: number | null
+          max_height?: string | null
+          min_age?: number | null
+          min_height?: string | null
+          preferred_communities?: string[] | null
+          preferred_education?: string[] | null
+          preferred_locations?: string[] | null
+          preferred_marital_status?: string | null
+          preferred_religion?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          bio: string | null
+          caste: string | null
+          community: string | null
+          created_at: string
+          date_of_birth: string | null
+          education: string | null
+          education_detail: string | null
+          family_type: string | null
+          family_values: string | null
+          father_occupation: string | null
+          first_name: string | null
+          gender: string | null
+          guna_score: number | null
+          height: string | null
+          id: string
+          income: string | null
+          last_name: string | null
+          location: string | null
+          manglik: boolean | null
+          marital_status: string | null
+          match_score: number | null
+          mother_occupation: string | null
+          nakshatra: string | null
+          phone: string | null
+          photo_url: string | null
+          profession: string | null
+          profile_complete: boolean | null
+          rashi: string | null
+          religion: string | null
+          siblings: string | null
+          state: string | null
+          updated_at: string
+          user_id: string
+          verified: boolean | null
+        }
+        Insert: {
+          bio?: string | null
+          caste?: string | null
+          community?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          education?: string | null
+          education_detail?: string | null
+          family_type?: string | null
+          family_values?: string | null
+          father_occupation?: string | null
+          first_name?: string | null
+          gender?: string | null
+          guna_score?: number | null
+          height?: string | null
+          id?: string
+          income?: string | null
+          last_name?: string | null
+          location?: string | null
+          manglik?: boolean | null
+          marital_status?: string | null
+          match_score?: number | null
+          mother_occupation?: string | null
+          nakshatra?: string | null
+          phone?: string | null
+          photo_url?: string | null
+          profession?: string | null
+          profile_complete?: boolean | null
+          rashi?: string | null
+          religion?: string | null
+          siblings?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id: string
+          verified?: boolean | null
+        }
+        Update: {
+          bio?: string | null
+          caste?: string | null
+          community?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          education?: string | null
+          education_detail?: string | null
+          family_type?: string | null
+          family_values?: string | null
+          father_occupation?: string | null
+          first_name?: string | null
+          gender?: string | null
+          guna_score?: number | null
+          height?: string | null
+          id?: string
+          income?: string | null
+          last_name?: string | null
+          location?: string | null
+          manglik?: boolean | null
+          marital_status?: string | null
+          match_score?: number | null
+          mother_occupation?: string | null
+          nakshatra?: string | null
+          phone?: string | null
+          photo_url?: string | null
+          profession?: string | null
+          profile_complete?: boolean | null
+          rashi?: string | null
+          religion?: string | null
+          siblings?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id?: string
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
