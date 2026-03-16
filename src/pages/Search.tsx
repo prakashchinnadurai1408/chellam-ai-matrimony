@@ -627,6 +627,18 @@ const SearchPage = () => {
                           </div>
                         </div>
 
+                        {/* AI Insights */}
+                        {aiInsights[profile.id] && aiInsights[profile.id].length > 0 && (
+                          <div className="mb-3 p-2.5 rounded-xl bg-accent/5 border border-accent/10">
+                            <p className="text-[10px] font-semibold text-accent flex items-center gap-1 mb-1.5">
+                              <Sparkles className="w-3 h-3" /> AI Insights
+                            </p>
+                            {aiInsights[profile.id].map((insight, idx) => (
+                              <p key={idx} className="text-[11px] text-muted-foreground mb-0.5">• {insight}</p>
+                            ))}
+                          </div>
+                        )}
+
                         <div className="flex gap-2">
                           <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs">
                             <X className="w-3 h-3" /> Skip
