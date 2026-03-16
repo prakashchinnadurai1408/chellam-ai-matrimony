@@ -194,7 +194,7 @@ const SearchPage = () => {
   ].filter(Boolean).length;
 
   const filtered = useMemo(() => {
-    let results = allProfiles.filter((p) => {
+    let results = combinedProfiles.filter((p) => {
       if (p.age < ageRange[0] || p.age > ageRange[1]) return false;
       if (selectedReligion && p.religion !== selectedReligion) return false;
       if (selectedCastes.length && !selectedCastes.includes(p.caste)) return false;
