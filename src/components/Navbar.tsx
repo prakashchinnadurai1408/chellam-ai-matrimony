@@ -62,7 +62,7 @@ const Navbar = () => {
             <>
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted text-sm">
                 <User className="w-3.5 h-3.5 text-primary" />
-                <span className="text-foreground font-medium">{user?.firstName || user?.phone}</span>
+                <span className="text-foreground font-medium">{profile?.first_name || profile?.phone || "User"}</span>
               </div>
               <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-1.5">
                 <LogOut className="w-3.5 h-3.5" /> Logout
