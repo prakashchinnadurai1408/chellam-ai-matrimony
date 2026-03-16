@@ -70,14 +70,21 @@ const Navbar = () => {
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) =>
+          {navLinks
+            .filter((link) => !link.authOnly || isAuthenticated)
+            .map((link) =>
             link.href.startsWith("/") ? (
               <Link
                 key={link.label}
                 to={link.href}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="relative text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 {link.label}
+                {link.label === "Messages" && unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-4 w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
               </Link>
             ) : (
               <a
