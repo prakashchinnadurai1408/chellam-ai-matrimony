@@ -1,14 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Heart, ArrowLeft, ArrowRight, User, GraduationCap, Users, Sparkles,
-  CheckCircle2, Loader2
+  CheckCircle2, Loader2, Camera, X as XIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const STEPS = [
   { label: "Personal", icon: User },
@@ -75,9 +76,57 @@ const CreateProfile = () => {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormData>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
-  const { isAuthenticated, isProfileComplete, profile, completeProfile, loading } = useAuth();
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isAuthenticated, isProfileComplete, profile, completeProfile, loading, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Please select an image under 5MB", variant: "destructive" });
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Invalid file", description: "Please select an image file", variant: "destructive" });
+      return;
+    }
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const removePhoto = () => {
+    setPhotoFile(null);
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const uploadPhoto = async (): Promise<string | null> => {
+    if (!photoFile || !user) return null;
+    setUploadingPhoto(true);
+    try {
+      const ext = photoFile.name.split(".").pop();
+      const path = `${user.id}/avatar.${ext}`;
+      const { error } = await supabase.storage
+        .from("profile-photos")
+        .upload(path, photoFile, { upsert: true });
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage
+        .from("profile-photos")
+        .getPublicUrl(path);
+      return publicUrl;
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+      return null;
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   useEffect(() => {
     if (loading) return;
@@ -97,6 +146,10 @@ const CreateProfile = () => {
   const handleFinish = async () => {
     setSubmitting(true);
     try {
+      let photoUrl: string | null = null;
+      if (photoFile) {
+        photoUrl = await uploadPhoto();
+      }
       await completeProfile({
         first_name: form.first_name,
         last_name: form.last_name,
@@ -118,6 +171,7 @@ const CreateProfile = () => {
         siblings: form.siblings,
         family_type: form.family_type,
         family_values: form.family_values,
+        ...(photoUrl ? { photo_url: photoUrl } : {}),
       });
       toast({ title: "Profile Created! 🎉", description: "Welcome to Chellam Matrimony" });
       navigate("/");
@@ -129,7 +183,41 @@ const CreateProfile = () => {
   };
 
   const stepContent = [
-    <div key="0" className="grid sm:grid-cols-2 gap-4">
+    <div key="0" className="space-y-6">
+      {/* Photo Upload */}
+      <div className="flex flex-col items-center gap-3 pb-4 border-b border-border">
+        <div className="relative">
+          {photoPreview ? (
+            <div className="relative w-28 h-28 rounded-full overflow-hidden border-4 border-primary/20">
+              <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+              <button
+                onClick={removePhoto}
+                className="absolute top-0 right-0 w-7 h-7 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-md"
+              >
+                <XIcon className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-28 h-28 rounded-full bg-muted border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center gap-1 transition-colors cursor-pointer"
+            >
+              <Camera className="w-6 h-6 text-muted-foreground" />
+              <span className="text-[10px] text-muted-foreground font-medium">Add Photo</span>
+            </button>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={handlePhotoSelect}
+            className="hidden"
+          />
+        </div>
+        <p className="text-xs text-muted-foreground">Upload a clear photo of yourself (max 5MB)</p>
+      </div>
+
+      <div className="grid sm:grid-cols-2 gap-4">
       <TextField label="First Name *" value={form.first_name} onChange={(v) => update("first_name", v)} placeholder="Enter first name" />
       <TextField label="Last Name" value={form.last_name} onChange={(v) => update("last_name", v)} placeholder="Enter last name" />
       <SelectField label="Gender *" value={form.gender} options={SELECT_OPTIONS.gender} onChange={(v) => update("gender", v)} />
@@ -149,6 +237,7 @@ const CreateProfile = () => {
           maxLength={500}
           className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
         />
+      </div>
       </div>
     </div>,
     <div key="1" className="grid sm:grid-cols-2 gap-4">
