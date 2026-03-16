@@ -94,10 +94,60 @@ const sortOptions = [
 ];
 
 const SearchPage = () => {
+  const [dbProfiles, setDbProfiles] = useState<any[]>([]);
+  const [loadingDb, setLoadingDb] = useState(true);
   const [showFilters, setShowFilters] = useState(true);
   const [showHoroscope, setShowHoroscope] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("match");
+
+  // Fetch real profiles from DB
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("profile_complete", true);
+      if (data) {
+        const mapped = data.map((p) => {
+          const age = p.date_of_birth
+            ? Math.floor((Date.now() - new Date(p.date_of_birth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+            : 25;
+          return {
+            id: p.id,
+            name: [p.first_name, p.last_name].filter(Boolean).join(" ") || "User",
+            age,
+            gender: p.gender || "",
+            location: p.location || "",
+            state: p.state || "",
+            image: p.photo_url || profile1,
+            education: p.education || "",
+            educationDetail: p.education_detail || p.education || "",
+            profession: p.profession || "",
+            income: p.income || "",
+            matchScore: p.match_score || Math.floor(Math.random() * 15 + 80),
+            verified: p.verified || false,
+            community: p.community || "",
+            religion: p.religion || "",
+            caste: p.caste || "",
+            rashi: p.rashi || "",
+            nakshatra: p.nakshatra || "",
+            manglik: p.manglik || false,
+            gunaScore: p.guna_score || 0,
+            height: p.height || "",
+            maritalStatus: p.marital_status || "Never Married",
+            isDbProfile: true,
+          };
+        });
+        setDbProfiles(mapped);
+      }
+      setLoadingDb(false);
+    };
+    fetchProfiles();
+  }, []);
+
+  // Combine DB profiles with mock data
+  const combinedProfiles = useMemo(() => [...dbProfiles, ...allProfiles], [dbProfiles]);
 
   // Filters
   const [ageRange, setAgeRange] = useState([21, 35]);
