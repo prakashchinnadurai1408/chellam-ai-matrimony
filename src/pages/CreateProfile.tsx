@@ -238,6 +238,7 @@ const CreateProfile = () => {
           className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
         />
       </div>
+      </div>
     </div>,
     <div key="1" className="grid sm:grid-cols-2 gap-4">
       <SelectField label="Highest Education *" value={form.education} options={SELECT_OPTIONS.education} onChange={(v) => update("education", v)} />
