@@ -61,26 +61,6 @@ const Auth = () => {
     if (e.key === "Backspace" && !otp[index] && index > 0) inputRefs.current[index - 1]?.focus();
   };
 
-  const handleOtpSubmit = async () => {
-    const code = otp.join("");
-    if (code.length < 4) { setOtpError("Enter all 4 digits"); return; }
-    if (code !== OTP_CODE) { setOtpError("Invalid OTP. Try 1234"); return; }
-
-    setSubmitting(true);
-    try {
-      const { login } = await import("@/contexts/AuthContext").then(() => {
-        // We need to use the hook's login, which is already available
-        return { login: null };
-      });
-      // Actually use the auth context login
-      await loginWithPhone(phone);
-    } catch (err: any) {
-      setOtpError(err.message || "Login failed");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const { login: loginWithPhone } = useAuth();
 
   const handleOtpSubmitReal = async () => {
