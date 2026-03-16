@@ -183,7 +183,41 @@ const CreateProfile = () => {
   };
 
   const stepContent = [
-    <div key="0" className="grid sm:grid-cols-2 gap-4">
+    <div key="0" className="space-y-6">
+      {/* Photo Upload */}
+      <div className="flex flex-col items-center gap-3 pb-4 border-b border-border">
+        <div className="relative">
+          {photoPreview ? (
+            <div className="relative w-28 h-28 rounded-full overflow-hidden border-4 border-primary/20">
+              <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+              <button
+                onClick={removePhoto}
+                className="absolute top-0 right-0 w-7 h-7 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-md"
+              >
+                <XIcon className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-28 h-28 rounded-full bg-muted border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center gap-1 transition-colors cursor-pointer"
+            >
+              <Camera className="w-6 h-6 text-muted-foreground" />
+              <span className="text-[10px] text-muted-foreground font-medium">Add Photo</span>
+            </button>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={handlePhotoSelect}
+            className="hidden"
+          />
+        </div>
+        <p className="text-xs text-muted-foreground">Upload a clear photo of yourself (max 5MB)</p>
+      </div>
+
+      <div className="grid sm:grid-cols-2 gap-4">
       <TextField label="First Name *" value={form.first_name} onChange={(v) => update("first_name", v)} placeholder="Enter first name" />
       <TextField label="Last Name" value={form.last_name} onChange={(v) => update("last_name", v)} placeholder="Enter last name" />
       <SelectField label="Gender *" value={form.gender} options={SELECT_OPTIONS.gender} onChange={(v) => update("gender", v)} />
