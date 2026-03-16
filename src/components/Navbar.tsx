@@ -125,7 +125,7 @@ const Navbar = () => {
                   <>
                     <div className="flex items-center gap-2 py-2 text-sm text-foreground">
                       <User className="w-4 h-4 text-primary" />
-                      {user?.firstName || user?.phone}
+                      {profile?.first_name || profile?.phone || "User"}
                     </div>
                     <Button variant="ghost" size="sm" onClick={() => { handleLogout(); setMobileOpen(false); }}>
                       Logout
