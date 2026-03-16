@@ -15,7 +15,7 @@ const navLinks = [
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, profile, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
