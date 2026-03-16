@@ -140,15 +140,22 @@ const Navbar = () => {
             className="md:hidden bg-card border-b border-border overflow-hidden"
           >
             <div className="px-4 py-4 flex flex-col gap-3">
-              {navLinks.map((link) =>
+              {navLinks
+                .filter((link) => !link.authOnly || isAuthenticated)
+                .map((link) =>
                 link.href.startsWith("/") ? (
                   <Link
                     key={link.label}
                     to={link.href}
-                    className="text-sm font-medium text-muted-foreground hover:text-foreground py-2"
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground py-2 flex items-center gap-2"
                     onClick={() => setMobileOpen(false)}
                   >
                     {link.label}
+                    {link.label === "Messages" && unreadCount > 0 && (
+                      <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
                   </Link>
                 ) : (
                   <a
