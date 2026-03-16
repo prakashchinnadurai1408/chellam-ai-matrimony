@@ -146,6 +146,10 @@ const CreateProfile = () => {
   const handleFinish = async () => {
     setSubmitting(true);
     try {
+      let photoUrl: string | null = null;
+      if (photoFile) {
+        photoUrl = await uploadPhoto();
+      }
       await completeProfile({
         first_name: form.first_name,
         last_name: form.last_name,
@@ -167,6 +171,7 @@ const CreateProfile = () => {
         siblings: form.siblings,
         family_type: form.family_type,
         family_values: form.family_values,
+        ...(photoUrl ? { photo_url: photoUrl } : {}),
       });
       toast({ title: "Profile Created! 🎉", description: "Welcome to Chellam Matrimony" });
       navigate("/");
