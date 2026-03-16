@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Heart, Menu, X, Sparkles, LogOut, User } from "lucide-react";
+import { Heart, Menu, X, Sparkles, LogOut, User, MessageCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 
 const navLinks = [
   { label: "Search", href: "/search" },
-  { label: "Discover", href: "#discover" },
+  { label: "Messages", href: "/messages", authOnly: true },
   { label: "How It Works", href: "#how-it-works" },
   { label: "Pricing", href: "#pricing" },
   { label: "Success Stories", href: "#success-stories" },
@@ -15,8 +16,41 @@ const navLinks = [
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { isAuthenticated, profile, logout } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const { isAuthenticated, user, profile, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Unread message count
+  useEffect(() => {
+    if (!user) { setUnreadCount(0); return; }
+    const fetchUnread = async () => {
+      // Get all conversation IDs for this user
+      const { data: convos } = await supabase
+        .from("conversations")
+        .select("id")
+        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`);
+      if (!convos || convos.length === 0) return;
+      const ids = convos.map((c: any) => c.id);
+      const { count } = await supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .in("conversation_id", ids)
+        .eq("read", false)
+        .neq("sender_id", user.id);
+      setUnreadCount(count || 0);
+    };
+    fetchUnread();
+
+    // Realtime subscription for new messages
+    const channel = supabase
+      .channel("navbar-unread")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
+        fetchUnread();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
 
   const handleLogout = async () => {
     await logout();
@@ -36,14 +70,21 @@ const Navbar = () => {
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) =>
+          {navLinks
+            .filter((link) => !link.authOnly || isAuthenticated)
+            .map((link) =>
             link.href.startsWith("/") ? (
               <Link
                 key={link.label}
                 to={link.href}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="relative text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 {link.label}
+                {link.label === "Messages" && unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-4 w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
               </Link>
             ) : (
               <a
@@ -99,15 +140,22 @@ const Navbar = () => {
             className="md:hidden bg-card border-b border-border overflow-hidden"
           >
             <div className="px-4 py-4 flex flex-col gap-3">
-              {navLinks.map((link) =>
+              {navLinks
+                .filter((link) => !link.authOnly || isAuthenticated)
+                .map((link) =>
                 link.href.startsWith("/") ? (
                   <Link
                     key={link.label}
                     to={link.href}
-                    className="text-sm font-medium text-muted-foreground hover:text-foreground py-2"
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground py-2 flex items-center gap-2"
                     onClick={() => setMobileOpen(false)}
                   >
                     {link.label}
+                    {link.label === "Messages" && unreadCount > 0 && (
+                      <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
                   </Link>
                 ) : (
                   <a

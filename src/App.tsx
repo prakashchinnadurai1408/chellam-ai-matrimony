@@ -9,6 +9,7 @@ import Auth from "./pages/Auth.tsx";
 import CreateProfile from "./pages/CreateProfile.tsx";
 import ProfileDetail from "./pages/ProfileDetail.tsx";
 import Search from "./pages/Search.tsx";
+import Messages from "./pages/Messages.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/create-profile" element={<CreateProfile />} />
             <Route path="/search" element={<Search />} />
             <Route path="/profile/:id" element={<ProfileDetail />} />
+            <Route path="/messages" element={<Messages />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
