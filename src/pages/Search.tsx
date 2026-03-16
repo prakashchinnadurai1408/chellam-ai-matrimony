@@ -516,15 +516,30 @@ const SearchPage = () => {
                 <p className="text-sm text-muted-foreground">
                   <span className="font-semibold text-foreground">{filtered.length}</span> profiles found
                 </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="hidden lg:flex gap-2"
-                  onClick={() => setShowFilters(!showFilters)}
-                >
-                  {showFilters ? <X className="w-4 h-4" /> : <SlidersHorizontal className="w-4 h-4" />}
-                  {showFilters ? "Hide Filters" : "Show Filters"}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="hero"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => {
+                      runAiMatching();
+                      toast.info("Running AI compatibility analysis...");
+                    }}
+                    disabled={matchingInProgress}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {matchingInProgress ? "Analyzing…" : "AI Match"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="hidden lg:flex gap-2"
+                    onClick={() => setShowFilters(!showFilters)}
+                  >
+                    {showFilters ? <X className="w-4 h-4" /> : <SlidersHorizontal className="w-4 h-4" />}
+                    {showFilters ? "Hide Filters" : "Show Filters"}
+                  </Button>
+                </div>
               </div>
 
               {filtered.length === 0 ? (
