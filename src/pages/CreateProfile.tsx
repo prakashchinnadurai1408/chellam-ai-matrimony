@@ -76,9 +76,57 @@ const CreateProfile = () => {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormData>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
-  const { isAuthenticated, isProfileComplete, profile, completeProfile, loading } = useAuth();
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isAuthenticated, isProfileComplete, profile, completeProfile, loading, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Please select an image under 5MB", variant: "destructive" });
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Invalid file", description: "Please select an image file", variant: "destructive" });
+      return;
+    }
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const removePhoto = () => {
+    setPhotoFile(null);
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const uploadPhoto = async (): Promise<string | null> => {
+    if (!photoFile || !user) return null;
+    setUploadingPhoto(true);
+    try {
+      const ext = photoFile.name.split(".").pop();
+      const path = `${user.id}/avatar.${ext}`;
+      const { error } = await supabase.storage
+        .from("profile-photos")
+        .upload(path, photoFile, { upsert: true });
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage
+        .from("profile-photos")
+        .getPublicUrl(path);
+      return publicUrl;
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+      return null;
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   useEffect(() => {
     if (loading) return;
