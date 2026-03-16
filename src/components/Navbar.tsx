@@ -16,8 +16,41 @@ const navLinks = [
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { isAuthenticated, profile, logout } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const { isAuthenticated, user, profile, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Unread message count
+  useEffect(() => {
+    if (!user) { setUnreadCount(0); return; }
+    const fetchUnread = async () => {
+      // Get all conversation IDs for this user
+      const { data: convos } = await supabase
+        .from("conversations")
+        .select("id")
+        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`);
+      if (!convos || convos.length === 0) return;
+      const ids = convos.map((c: any) => c.id);
+      const { count } = await supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .in("conversation_id", ids)
+        .eq("read", false)
+        .neq("sender_id", user.id);
+      setUnreadCount(count || 0);
+    };
+    fetchUnread();
+
+    // Realtime subscription for new messages
+    const channel = supabase
+      .channel("navbar-unread")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
+        fetchUnread();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
 
   const handleLogout = async () => {
     await logout();
