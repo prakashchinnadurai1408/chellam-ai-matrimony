@@ -96,6 +96,8 @@ const sortOptions = [
 const SearchPage = () => {
   const [dbProfiles, setDbProfiles] = useState<any[]>([]);
   const [loadingDb, setLoadingDb] = useState(true);
+  const [aiInsights, setAiInsights] = useState<Record<string, string[]>>({});
+  const [matchingInProgress, setMatchingInProgress] = useState(false);
   const [showFilters, setShowFilters] = useState(true);
   const [showHoroscope, setShowHoroscope] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -145,6 +147,39 @@ const SearchPage = () => {
     };
     fetchProfiles();
   }, []);
+
+  // Run AI matching
+  const runAiMatching = async () => {
+    setMatchingInProgress(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.warn("Not logged in, skipping AI matching");
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke("ai-match", {});
+      if (error) {
+        console.error("AI matching error:", error);
+        return;
+      }
+      const matches = data?.matches || [];
+      const insightsMap: Record<string, string[]> = {};
+      const updatedDbProfiles = dbProfiles.map((p) => {
+        const match = matches.find((m: any) => m.profile_id === p.id);
+        if (match) {
+          insightsMap[p.id] = match.insights || [];
+          return { ...p, matchScore: Math.round(match.score) };
+        }
+        return p;
+      });
+      setDbProfiles(updatedDbProfiles);
+      setAiInsights(insightsMap);
+    } catch (e) {
+      console.error("AI matching failed:", e);
+    } finally {
+      setMatchingInProgress(false);
+    }
+  };
 
   // Combine DB profiles with mock data
   const combinedProfiles = useMemo(() => [...dbProfiles, ...allProfiles], [dbProfiles]);
