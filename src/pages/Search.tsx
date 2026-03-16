@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -96,6 +97,8 @@ const sortOptions = [
 const SearchPage = () => {
   const [dbProfiles, setDbProfiles] = useState<any[]>([]);
   const [loadingDb, setLoadingDb] = useState(true);
+  const [aiInsights, setAiInsights] = useState<Record<string, string[]>>({});
+  const [matchingInProgress, setMatchingInProgress] = useState(false);
   const [showFilters, setShowFilters] = useState(true);
   const [showHoroscope, setShowHoroscope] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -145,6 +148,39 @@ const SearchPage = () => {
     };
     fetchProfiles();
   }, []);
+
+  // Run AI matching
+  const runAiMatching = async () => {
+    setMatchingInProgress(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.warn("Not logged in, skipping AI matching");
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke("ai-match", {});
+      if (error) {
+        console.error("AI matching error:", error);
+        return;
+      }
+      const matches = data?.matches || [];
+      const insightsMap: Record<string, string[]> = {};
+      const updatedDbProfiles = dbProfiles.map((p) => {
+        const match = matches.find((m: any) => m.profile_id === p.id);
+        if (match) {
+          insightsMap[p.id] = match.insights || [];
+          return { ...p, matchScore: Math.round(match.score) };
+        }
+        return p;
+      });
+      setDbProfiles(updatedDbProfiles);
+      setAiInsights(insightsMap);
+    } catch (e) {
+      console.error("AI matching failed:", e);
+    } finally {
+      setMatchingInProgress(false);
+    }
+  };
 
   // Combine DB profiles with mock data
   const combinedProfiles = useMemo(() => [...dbProfiles, ...allProfiles], [dbProfiles]);
@@ -480,15 +516,30 @@ const SearchPage = () => {
                 <p className="text-sm text-muted-foreground">
                   <span className="font-semibold text-foreground">{filtered.length}</span> profiles found
                 </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="hidden lg:flex gap-2"
-                  onClick={() => setShowFilters(!showFilters)}
-                >
-                  {showFilters ? <X className="w-4 h-4" /> : <SlidersHorizontal className="w-4 h-4" />}
-                  {showFilters ? "Hide Filters" : "Show Filters"}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="hero"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => {
+                      runAiMatching();
+                      toast.info("Running AI compatibility analysis...");
+                    }}
+                    disabled={matchingInProgress}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {matchingInProgress ? "Analyzing…" : "AI Match"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="hidden lg:flex gap-2"
+                    onClick={() => setShowFilters(!showFilters)}
+                  >
+                    {showFilters ? <X className="w-4 h-4" /> : <SlidersHorizontal className="w-4 h-4" />}
+                    {showFilters ? "Hide Filters" : "Show Filters"}
+                  </Button>
+                </div>
               </div>
 
               {filtered.length === 0 ? (
@@ -575,6 +626,18 @@ const SearchPage = () => {
                             />
                           </div>
                         </div>
+
+                        {/* AI Insights */}
+                        {aiInsights[profile.id] && aiInsights[profile.id].length > 0 && (
+                          <div className="mb-3 p-2.5 rounded-xl bg-accent/5 border border-accent/10">
+                            <p className="text-[10px] font-semibold text-accent flex items-center gap-1 mb-1.5">
+                              <Sparkles className="w-3 h-3" /> AI Insights
+                            </p>
+                            {aiInsights[profile.id].map((insight, idx) => (
+                              <p key={idx} className="text-[11px] text-muted-foreground mb-0.5">• {insight}</p>
+                            ))}
+                          </div>
+                        )}
 
                         <div className="flex gap-2">
                           <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs">
