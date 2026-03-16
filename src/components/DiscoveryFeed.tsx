@@ -177,8 +177,10 @@ const DiscoveryFeed = () => {
                   <Button variant="outline" size="sm" className="flex-1 gap-1">
                     <X className="w-3.5 h-3.5" /> Skip
                   </Button>
-                  <Button variant="hero" size="sm" className="flex-1 gap-1">
-                    <Heart className="w-3.5 h-3.5" /> Interest
+                  <Button variant="hero" size="sm" className="flex-1 gap-1" asChild>
+                    <Link to={`/profile/${profile.id}`}>
+                      <Heart className="w-3.5 h-3.5" /> View Profile
+                    </Link>
                   </Button>
                 </div>
               </div>
