@@ -1,89 +1,152 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { User, Session } from "@supabase/supabase-js";
 
-export interface UserProfile {
-  phone: string;
-  firstName: string;
-  lastName: string;
-  gender: string;
-  dateOfBirth: string;
-  religion: string;
-  community: string;
-  motherTongue: string;
-  city: string;
-  state: string;
-  education: string;
-  profession: string;
-  income: string;
-  height: string;
-  maritalStatus: string;
-  diet: string;
-  aboutMe: string;
-  fatherOccupation: string;
-  motherOccupation: string;
-  siblings: string;
-  familyType: string;
-  familyValues: string;
-  partnerAgeMin: string;
-  partnerAgeMax: string;
-  partnerEducation: string;
-  partnerCommunity: string;
-  partnerLocation: string;
+export interface ProfileData {
+  id: string;
+  user_id: string;
+  phone: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  gender: string | null;
+  date_of_birth: string | null;
+  religion: string | null;
+  community: string | null;
+  caste: string | null;
+  bio: string | null;
+  education: string | null;
+  education_detail: string | null;
+  profession: string | null;
+  income: string | null;
+  location: string | null;
+  state: string | null;
+  height: string | null;
+  marital_status: string | null;
+  photo_url: string | null;
+  family_type: string | null;
+  father_occupation: string | null;
+  mother_occupation: string | null;
+  siblings: string | null;
+  family_values: string | null;
+  rashi: string | null;
+  nakshatra: string | null;
+  manglik: boolean | null;
+  guna_score: number | null;
+  verified: boolean | null;
+  profile_complete: boolean | null;
+  match_score: number | null;
 }
-
-const emptyProfile: UserProfile = {
-  phone: "", firstName: "", lastName: "", gender: "", dateOfBirth: "",
-  religion: "", community: "", motherTongue: "", city: "", state: "",
-  education: "", profession: "", income: "", height: "", maritalStatus: "",
-  diet: "", aboutMe: "", fatherOccupation: "", motherOccupation: "",
-  siblings: "", familyType: "", familyValues: "", partnerAgeMin: "",
-  partnerAgeMax: "", partnerEducation: "", partnerCommunity: "", partnerLocation: "",
-};
 
 interface AuthContextType {
   isAuthenticated: boolean;
   isProfileComplete: boolean;
-  user: UserProfile | null;
-  login: (phone: string) => void;
-  logout: () => void;
-  completeProfile: (profile: UserProfile) => void;
+  user: User | null;
+  profile: ProfileData | null;
+  loading: boolean;
+  login: (phone: string) => Promise<void>;
+  logout: () => Promise<void>;
+  completeProfile: (data: Partial<ProfileData>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem("chellam_auth") === "true");
-  const [isProfileComplete, setIsProfileComplete] = useState(() => localStorage.getItem("chellam_profile_complete") === "true");
-  const [user, setUser] = useState<UserProfile | null>(() => {
-    const saved = localStorage.getItem("chellam_user");
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = (phone: string) => {
-    setIsAuthenticated(true);
-    localStorage.setItem("chellam_auth", "true");
-    const profile = { ...emptyProfile, phone };
-    setUser(profile);
-    localStorage.setItem("chellam_user", JSON.stringify(profile));
+  const fetchProfile = async (userId: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+    if (data) setProfile(data as ProfileData);
+    return data;
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
-    setIsProfileComplete(false);
+  useEffect(() => {
+    // Set up auth listener BEFORE checking session
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          // Use setTimeout to avoid Supabase client deadlock
+          setTimeout(() => fetchProfile(session.user.id), 0);
+        } else {
+          setProfile(null);
+        }
+        setLoading(false);
+      }
+    );
+
+    // Then check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const isAuthenticated = !!user;
+  const isProfileComplete = profile?.profile_complete ?? false;
+
+  const login = async (phone: string) => {
+    // Use email auth with phone as identifier for dev (no SMS provider needed)
+    const email = `${phone}@chellam.dev`;
+    const password = `chellam_${phone}_1234`;
+
+    // Try sign up first, then sign in
+    const { error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { phone } },
+    });
+
+    if (signUpError && signUpError.message !== "User already registered") {
+      throw signUpError;
+    }
+
+    // If user already exists, sign in
+    if (signUpError?.message === "User already registered") {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (signInError) throw signInError;
+    }
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem("chellam_auth");
-    localStorage.removeItem("chellam_profile_complete");
-    localStorage.removeItem("chellam_user");
+    setProfile(null);
   };
 
-  const completeProfile = (profile: UserProfile) => {
-    setUser(profile);
-    setIsProfileComplete(true);
-    localStorage.setItem("chellam_user", JSON.stringify(profile));
-    localStorage.setItem("chellam_profile_complete", "true");
+  const completeProfile = async (data: Partial<ProfileData>) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        ...data,
+        profile_complete: true,
+      })
+      .eq("user_id", user.id);
+
+    if (error) throw error;
+    await fetchProfile(user.id);
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isProfileComplete, user, login, logout, completeProfile }}>
+    <AuthContext.Provider value={{
+      isAuthenticated, isProfileComplete, user, profile, loading,
+      login, logout, completeProfile,
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Heart, Sparkles, ArrowLeft, Shield, Phone } from "lucide-react";
+import { Heart, Sparkles, ArrowLeft, Shield, Phone, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -18,15 +18,17 @@ const Auth = () => {
   const [phoneError, setPhoneError] = useState("");
   const [otpError, setOtpError] = useState("");
   const [timer, setTimer] = useState(30);
+  const [submitting, setSubmitting] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const { login, isAuthenticated, isProfileComplete } = useAuth();
+  const { isAuthenticated, isProfileComplete, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
+    if (loading) return;
     if (isAuthenticated && isProfileComplete) navigate("/");
     else if (isAuthenticated && !isProfileComplete) navigate("/create-profile");
-  }, [isAuthenticated, isProfileComplete, navigate]);
+  }, [isAuthenticated, isProfileComplete, loading, navigate]);
 
   useEffect(() => {
     if (step !== "otp") return;
@@ -59,12 +61,43 @@ const Auth = () => {
     if (e.key === "Backspace" && !otp[index] && index > 0) inputRefs.current[index - 1]?.focus();
   };
 
-  const handleOtpSubmit = () => {
+  const handleOtpSubmit = async () => {
     const code = otp.join("");
     if (code.length < 4) { setOtpError("Enter all 4 digits"); return; }
     if (code !== OTP_CODE) { setOtpError("Invalid OTP. Try 1234"); return; }
-    login(phone);
-    navigate("/create-profile");
+
+    setSubmitting(true);
+    try {
+      const { login } = await import("@/contexts/AuthContext").then(() => {
+        // We need to use the hook's login, which is already available
+        return { login: null };
+      });
+      // Actually use the auth context login
+      await loginWithPhone(phone);
+    } catch (err: any) {
+      setOtpError(err.message || "Login failed");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const { login: loginWithPhone } = useAuth();
+
+  const handleOtpSubmitReal = async () => {
+    const code = otp.join("");
+    if (code.length < 4) { setOtpError("Enter all 4 digits"); return; }
+    if (code !== OTP_CODE) { setOtpError("Invalid OTP. Try 1234"); return; }
+
+    setSubmitting(true);
+    try {
+      await loginWithPhone(phone);
+      toast({ title: "Welcome! 🎉", description: "Logged in successfully" });
+      // Navigation handled by useEffect
+    } catch (err: any) {
+      setOtpError(err.message || "Login failed. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -102,7 +135,6 @@ const Auth = () => {
       {/* Right Form Panel */}
       <div className="flex-1 flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-md">
-          {/* Logo */}
           <div className="flex items-center gap-2 mb-10">
             <div className="w-9 h-9 rounded-lg gradient-hero flex items-center justify-center">
               <Heart className="w-5 h-5 text-primary-foreground" />
@@ -194,8 +226,15 @@ const Auth = () => {
                 </div>
                 {otpError && <p className="text-xs text-destructive text-center">{otpError}</p>}
 
-                <Button variant="hero" className="w-full gap-2" size="lg" onClick={handleOtpSubmit}>
-                  <Sparkles className="w-4 h-4" /> Verify & Continue
+                <Button
+                  variant="hero"
+                  className="w-full gap-2"
+                  size="lg"
+                  onClick={handleOtpSubmitReal}
+                  disabled={submitting}
+                >
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  {submitting ? "Verifying…" : "Verify & Continue"}
                 </Button>
 
                 <p className="text-center text-sm text-muted-foreground">
