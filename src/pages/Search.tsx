@@ -221,7 +221,7 @@ const SearchPage = () => {
     else if (sortBy === "age-desc") results.sort((a, b) => b.age - a.age);
 
     return results;
-  }, [ageRange, selectedReligion, selectedCastes, selectedEducations, selectedProfessions, selectedStates, selectedMarital, verifiedOnly, minMatchScore, selectedRashi, selectedNakshatra, manglikFilter, minGuna, searchQuery, sortBy]);
+  }, [combinedProfiles, ageRange, selectedReligion, selectedCastes, selectedEducations, selectedProfessions, selectedStates, selectedMarital, verifiedOnly, minMatchScore, selectedRashi, selectedNakshatra, manglikFilter, minGuna, searchQuery, sortBy]);
 
   const FilterSection = ({ title, icon: Icon, children, collapsible, open, onToggle }: {
     title: string; icon: any; children: React.ReactNode;
