@@ -27,6 +27,7 @@ const App = () => (
             <Route path="/create-profile" element={<CreateProfile />} />
             <Route path="/search" element={<Search />} />
             <Route path="/profile/:id" element={<ProfileDetail />} />
+            <Route path="/messages" element={<Messages />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
