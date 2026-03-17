@@ -218,7 +218,7 @@ const ProfileDetail = () => {
                 <Button variant="hero" className="flex-1 gap-2">
                   <Heart className="w-4 h-4" /> Send Interest
                 </Button>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" onClick={() => navigate(`/messages?with=${profile.id}`)}>
                   <MessageCircle className="w-4 h-4" />
                 </Button>
                 <Button variant="outline" size="icon">
