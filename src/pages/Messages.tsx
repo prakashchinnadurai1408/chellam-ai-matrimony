@@ -11,6 +11,9 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { usePresence } from "@/hooks/usePresence";
+import { useTypingIndicator } from "@/hooks/useTypingIndicator";
+import TypingIndicator from "@/components/TypingIndicator";
 
 interface Conversation {
   id: string;
@@ -50,6 +53,9 @@ const MessagesPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const { isOnline } = usePresence(user?.id);
+  const { isOtherTyping, sendTyping } = useTypingIndicator(activeConversation, user?.id);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -303,12 +309,17 @@ const MessagesPage = () => {
                       activeConversation === convo.id ? "bg-muted/70" : ""
                     }`}
                   >
-                    <Avatar className="w-12 h-12 shrink-0">
-                      <AvatarImage src={convo.other_user.photo_url || undefined} />
-                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-                        {getInitials(convo.other_user.first_name, convo.other_user.last_name)}
-                      </AvatarFallback>
-                    </Avatar>
+                    <div className="relative">
+                      <Avatar className="w-12 h-12 shrink-0">
+                        <AvatarImage src={convo.other_user.photo_url || undefined} />
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                          {getInitials(convo.other_user.first_name, convo.other_user.last_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      {isOnline(convo.other_user.user_id) && (
+                        <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-card" />
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-sm text-foreground truncate">
@@ -361,16 +372,28 @@ const MessagesPage = () => {
                   </button>
                   {activeConvo && (
                     <>
-                      <Avatar className="w-9 h-9">
-                        <AvatarImage src={activeConvo.other_user.photo_url || undefined} />
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                          {getInitials(activeConvo.other_user.first_name, activeConvo.other_user.last_name)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="relative">
+                        <Avatar className="w-9 h-9">
+                          <AvatarImage src={activeConvo.other_user.photo_url || undefined} />
+                          <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                            {getInitials(activeConvo.other_user.first_name, activeConvo.other_user.last_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        {isOnline(activeConvo.other_user.user_id) && (
+                          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-card" />
+                        )}
+                      </div>
                       <div>
                         <h3 className="font-semibold text-sm text-foreground">
                           {[activeConvo.other_user.first_name, activeConvo.other_user.last_name].filter(Boolean).join(" ") || "User"}
                         </h3>
+                        <p className="text-[11px] text-muted-foreground">
+                          {isOnline(activeConvo.other_user.user_id) ? (
+                            <span className="text-green-600 font-medium">Online</span>
+                          ) : (
+                            "Offline"
+                          )}
+                        </p>
                       </div>
                     </>
                   )}
@@ -411,6 +434,9 @@ const MessagesPage = () => {
                       );
                     })}
                   </AnimatePresence>
+                  <AnimatePresence>
+                    {isOtherTyping && <TypingIndicator />}
+                  </AnimatePresence>
                   <div ref={messagesEndRef} />
                 </div>
 
@@ -424,7 +450,7 @@ const MessagesPage = () => {
                       ref={inputRef}
                       placeholder="Type a message…"
                       value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
+                      onChange={(e) => { setNewMessage(e.target.value); sendTyping(); }}
                       className="flex-1"
                       autoFocus
                     />
