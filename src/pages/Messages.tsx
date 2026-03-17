@@ -450,7 +450,7 @@ const MessagesPage = () => {
                       ref={inputRef}
                       placeholder="Type a message…"
                       value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
+                      onChange={(e) => { setNewMessage(e.target.value); sendTyping(); }}
                       className="flex-1"
                       autoFocus
                     />
