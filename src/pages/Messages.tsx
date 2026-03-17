@@ -372,16 +372,28 @@ const MessagesPage = () => {
                   </button>
                   {activeConvo && (
                     <>
-                      <Avatar className="w-9 h-9">
-                        <AvatarImage src={activeConvo.other_user.photo_url || undefined} />
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                          {getInitials(activeConvo.other_user.first_name, activeConvo.other_user.last_name)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="relative">
+                        <Avatar className="w-9 h-9">
+                          <AvatarImage src={activeConvo.other_user.photo_url || undefined} />
+                          <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                            {getInitials(activeConvo.other_user.first_name, activeConvo.other_user.last_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        {isOnline(activeConvo.other_user.user_id) && (
+                          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-card" />
+                        )}
+                      </div>
                       <div>
                         <h3 className="font-semibold text-sm text-foreground">
                           {[activeConvo.other_user.first_name, activeConvo.other_user.last_name].filter(Boolean).join(" ") || "User"}
                         </h3>
+                        <p className="text-[11px] text-muted-foreground">
+                          {isOnline(activeConvo.other_user.user_id) ? (
+                            <span className="text-green-600 font-medium">Online</span>
+                          ) : (
+                            "Offline"
+                          )}
+                        </p>
                       </div>
                     </>
                   )}
