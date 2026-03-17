@@ -162,6 +162,7 @@ const InfoRow = ({ icon: Icon, label, value }: { icon: React.ElementType; label:
 
 const ProfileDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const profile = profilesData[id || "1"] || profilesData["1"];
   const mainImage = profile.images[0];
 
