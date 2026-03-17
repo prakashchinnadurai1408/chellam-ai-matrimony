@@ -54,6 +54,9 @@ const MessagesPage = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const { isOnline } = usePresence(user?.id);
+  const { isOtherTyping, sendTyping } = useTypingIndicator(activeConversation, user?.id);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
