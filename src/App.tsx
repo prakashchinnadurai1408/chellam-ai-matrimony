@@ -10,6 +10,7 @@ import CreateProfile from "./pages/CreateProfile.tsx";
 import ProfileDetail from "./pages/ProfileDetail.tsx";
 import Search from "./pages/Search.tsx";
 import Messages from "./pages/Messages.tsx";
+import Preferences from "./pages/Preferences.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
