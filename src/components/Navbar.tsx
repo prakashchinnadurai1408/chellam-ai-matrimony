@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const navLinks = [
   { label: "Search", href: "/search" },
   { label: "Messages", href: "/messages", authOnly: true },
+  { label: "Preferences", href: "/preferences", authOnly: true },
   { label: "How It Works", href: "#how-it-works" },
   { label: "Pricing", href: "#pricing" },
   { label: "Success Stories", href: "#success-stories" },
