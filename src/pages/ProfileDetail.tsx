@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -162,6 +162,7 @@ const InfoRow = ({ icon: Icon, label, value }: { icon: React.ElementType; label:
 
 const ProfileDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const profile = profilesData[id || "1"] || profilesData["1"];
   const mainImage = profile.images[0];
 
@@ -217,7 +218,7 @@ const ProfileDetail = () => {
                 <Button variant="hero" className="flex-1 gap-2">
                   <Heart className="w-4 h-4" /> Send Interest
                 </Button>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" onClick={() => navigate(`/messages?with=${profile.id}`)}>
                   <MessageCircle className="w-4 h-4" />
                 </Button>
                 <Button variant="outline" size="icon">
