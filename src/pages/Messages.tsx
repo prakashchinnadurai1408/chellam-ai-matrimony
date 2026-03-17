@@ -11,6 +11,9 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { usePresence } from "@/hooks/usePresence";
+import { useTypingIndicator } from "@/hooks/useTypingIndicator";
+import TypingIndicator from "@/components/TypingIndicator";
 
 interface Conversation {
   id: string;
