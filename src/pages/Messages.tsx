@@ -309,12 +309,17 @@ const MessagesPage = () => {
                       activeConversation === convo.id ? "bg-muted/70" : ""
                     }`}
                   >
-                    <Avatar className="w-12 h-12 shrink-0">
-                      <AvatarImage src={convo.other_user.photo_url || undefined} />
-                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-                        {getInitials(convo.other_user.first_name, convo.other_user.last_name)}
-                      </AvatarFallback>
-                    </Avatar>
+                    <div className="relative">
+                      <Avatar className="w-12 h-12 shrink-0">
+                        <AvatarImage src={convo.other_user.photo_url || undefined} />
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                          {getInitials(convo.other_user.first_name, convo.other_user.last_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      {isOnline(convo.other_user.user_id) && (
+                        <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-card" />
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-sm text-foreground truncate">
