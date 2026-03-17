@@ -434,6 +434,9 @@ const MessagesPage = () => {
                       );
                     })}
                   </AnimatePresence>
+                  <AnimatePresence>
+                    {isOtherTyping && <TypingIndicator />}
+                  </AnimatePresence>
                   <div ref={messagesEndRef} />
                 </div>
 
