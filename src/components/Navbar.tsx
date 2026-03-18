@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Heart, Menu, X, Sparkles, LogOut, User, MessageCircle } from "lucide-react";
+import { Heart, Menu, X, Sparkles, LogOut, User, MessageCircle, Shield } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdminRole } from "@/hooks/useAdminRole";
 
 const navLinks = [
   { label: "Search", href: "/search" },
@@ -19,6 +20,7 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const { isAuthenticated, user, profile, logout } = useAuth();
+  const { isAdmin } = useAdminRole(user?.id);
   const navigate = useNavigate();
 
   // Unread message count
@@ -102,6 +104,13 @@ const Navbar = () => {
         <div className="hidden md:flex items-center gap-3">
           {isAuthenticated ? (
             <>
+              {isAdmin && (
+                <Button variant="outline" size="sm" className="gap-1.5" asChild>
+                  <Link to="/admin">
+                    <Shield className="w-3.5 h-3.5" /> Admin
+                  </Link>
+                </Button>
+              )}
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted text-sm">
                 <User className="w-3.5 h-3.5 text-primary" />
                 <span className="text-foreground font-medium">{profile?.first_name || profile?.phone || "User"}</span>

@@ -12,6 +12,11 @@ import Search from "./pages/Search.tsx";
 import Messages from "./pages/Messages.tsx";
 import Preferences from "./pages/Preferences.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import AdminDashboard from "./pages/admin/AdminDashboard.tsx";
+import AdminUsers from "./pages/admin/AdminUsers.tsx";
+import AdminModeration from "./pages/admin/AdminModeration.tsx";
+import AdminMessages from "./pages/admin/AdminMessages.tsx";
+import AdminSettings from "./pages/admin/AdminSettings.tsx";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +35,11 @@ const App = () => (
             <Route path="/profile/:id" element={<ProfileDetail />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/preferences" element={<Preferences />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/moderation" element={<AdminModeration />} />
+            <Route path="/admin/messages" element={<AdminMessages />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
