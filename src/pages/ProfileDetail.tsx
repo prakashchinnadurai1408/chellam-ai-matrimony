@@ -226,6 +226,15 @@ const ProfileDetail = () => {
                 </Button>
               </div>
 
+              {/* Full-width Send Message */}
+              <Button
+                variant="warm"
+                className="w-full gap-2"
+                onClick={() => navigate(`/messages?with=${profile.id}`)}
+              >
+                <MessageCircle className="w-4 h-4" /> Send Message
+              </Button>
+
               {/* Quick Stats */}
               <div className="bg-card rounded-2xl border border-border/50 p-5 shadow-card space-y-1">
                 <InfoRow icon={GraduationCap} label="Education" value={profile.education} />
