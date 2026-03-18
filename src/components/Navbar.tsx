@@ -20,6 +20,7 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const { isAuthenticated, user, profile, logout } = useAuth();
+  const { isAdmin } = useAdminRole(user?.id);
   const navigate = useNavigate();
 
   // Unread message count
