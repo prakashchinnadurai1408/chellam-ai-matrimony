@@ -104,6 +104,13 @@ const Navbar = () => {
         <div className="hidden md:flex items-center gap-3">
           {isAuthenticated ? (
             <>
+              {isAdmin && (
+                <Button variant="outline" size="sm" className="gap-1.5" asChild>
+                  <Link to="/admin">
+                    <Shield className="w-3.5 h-3.5" /> Admin
+                  </Link>
+                </Button>
+              )}
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted text-sm">
                 <User className="w-3.5 h-3.5 text-primary" />
                 <span className="text-foreground font-medium">{profile?.first_name || profile?.phone || "User"}</span>
