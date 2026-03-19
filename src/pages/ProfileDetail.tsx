@@ -213,27 +213,8 @@ const ProfileDetail = () => {
                 ))}
               </div>
 
-              {/* Quick Actions */}
-              <div className="flex gap-3">
-                <Button variant="hero" className="flex-1 gap-2">
-                  <Heart className="w-4 h-4" /> Send Interest
-                </Button>
-                <Button variant="outline" size="icon" onClick={() => navigate(`/messages?with=${profile.id}`)}>
-                  <MessageCircle className="w-4 h-4" />
-                </Button>
-                <Button variant="outline" size="icon">
-                  <Phone className="w-4 h-4" />
-                </Button>
-              </div>
-
-              {/* Full-width Send Message */}
-              <Button
-                variant="warm"
-                className="w-full gap-2"
-                onClick={() => navigate(`/messages?with=${profile.id}`)}
-              >
-                <MessageCircle className="w-4 h-4" /> Send Message
-              </Button>
+              {/* Quick Actions — Interest, Shortlist, Message */}
+              <ProfileActions profileId={profile.id} navigate={navigate} />
 
               {/* Quick Stats */}
               <div className="bg-card rounded-2xl border border-border/50 p-5 shadow-card space-y-1">
