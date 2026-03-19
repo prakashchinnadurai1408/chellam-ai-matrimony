@@ -38,6 +38,99 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_matches: {
+        Row: {
+          compatibility_score: number
+          created_at: string
+          id: string
+          match_date: string
+          match_reasons: Json | null
+          match_user_id: string
+          user_id: string
+        }
+        Insert: {
+          compatibility_score?: number
+          created_at?: string
+          id?: string
+          match_date?: string
+          match_reasons?: Json | null
+          match_user_id: string
+          user_id: string
+        }
+        Update: {
+          compatibility_score?: number
+          created_at?: string
+          id?: string
+          match_date?: string
+          match_reasons?: Json | null
+          match_user_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      interests: {
+        Row: {
+          created_at: string
+          id: string
+          receiver_id: string
+          sender_id: string
+          status: Database["public"]["Enums"]["interest_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          receiver_id: string
+          sender_id: string
+          status?: Database["public"]["Enums"]["interest_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          receiver_id?: string
+          sender_id?: string
+          status?: Database["public"]["Enums"]["interest_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      memberships: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          plan_type: string | null
+          started_at: string | null
+          tier: Database["public"]["Enums"]["membership_tier"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          plan_type?: string | null
+          started_at?: string | null
+          tier?: Database["public"]["Enums"]["membership_tier"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          plan_type?: string | null
+          started_at?: string | null
+          tier?: Database["public"]["Enums"]["membership_tier"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
@@ -118,6 +211,105 @@ export type Database = {
           preferred_religion?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      payment_requests: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          plan_type: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          screenshot_url: string | null
+          status: string
+          tier: Database["public"]["Enums"]["membership_tier"]
+          upi_transaction_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          plan_type?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          screenshot_url?: string | null
+          status?: string
+          tier: Database["public"]["Enums"]["membership_tier"]
+          upi_transaction_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          plan_type?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          screenshot_url?: string | null
+          status?: string
+          tier?: Database["public"]["Enums"]["membership_tier"]
+          upi_transaction_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      payment_settings: {
+        Row: {
+          concierge_annual_price: number
+          concierge_monthly_price: number
+          id: string
+          premium_annual_price: number
+          premium_monthly_price: number
+          qr_image_url: string | null
+          updated_at: string
+          updated_by: string | null
+          upi_id: string | null
+        }
+        Insert: {
+          concierge_annual_price?: number
+          concierge_monthly_price?: number
+          id?: string
+          premium_annual_price?: number
+          premium_monthly_price?: number
+          qr_image_url?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          upi_id?: string | null
+        }
+        Update: {
+          concierge_annual_price?: number
+          concierge_monthly_price?: number
+          id?: string
+          premium_annual_price?: number
+          premium_monthly_price?: number
+          qr_image_url?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          upi_id?: string | null
+        }
+        Relationships: []
+      }
+      profile_views: {
+        Row: {
+          id: string
+          viewed_at: string
+          viewed_id: string
+          viewer_id: string
+        }
+        Insert: {
+          id?: string
+          viewed_at?: string
+          viewed_id: string
+          viewer_id: string
+        }
+        Update: {
+          id?: string
+          viewed_at?: string
+          viewed_id?: string
+          viewer_id?: string
         }
         Relationships: []
       }
@@ -232,6 +424,27 @@ export type Database = {
         }
         Relationships: []
       }
+      shortlists: {
+        Row: {
+          created_at: string
+          id: string
+          profile_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          profile_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          profile_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -268,6 +481,8 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      interest_status: "pending" | "accepted" | "declined"
+      membership_tier: "free" | "premium" | "concierge"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -396,6 +611,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      interest_status: ["pending", "accepted", "declined"],
+      membership_tier: ["free", "premium", "concierge"],
     },
   },
 } as const
