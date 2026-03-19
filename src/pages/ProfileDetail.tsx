@@ -2,6 +2,7 @@ import { useParams, Link, useNavigate, NavigateFunction } from "react-router-dom
 import { useAuth } from "@/contexts/AuthContext";
 import { useInterestActions } from "@/hooks/useInterestActions";
 import { useMembership } from "@/hooks/useMembership";
+import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
