@@ -1,4 +1,7 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, NavigateFunction } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useInterestActions } from "@/hooks/useInterestActions";
+import { useMembership } from "@/hooks/useMembership";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -160,6 +163,57 @@ const InfoRow = ({ icon: Icon, label, value }: { icon: React.ElementType; label:
   </div>
 );
 
+const ProfileActions = ({ profileId, navigate }: { profileId: string; navigate: NavigateFunction }) => {
+  const { user } = useAuth();
+  const { interest, isShortlisted, loading, sendInterest, toggleShortlist } = useInterestActions(user?.id, profileId);
+  const { isPremiumOrAbove } = useMembership(user?.id);
+
+  if (!user) return (
+    <div className="flex gap-3">
+      <Button variant="hero" className="flex-1 gap-2" onClick={() => navigate("/auth")}>
+        <Heart className="w-4 h-4" /> Sign in to Connect
+      </Button>
+    </div>
+  );
+
+  const canMessage = isPremiumOrAbove && interest?.status === "accepted";
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-3">
+        {!interest ? (
+          <Button variant="hero" className="flex-1 gap-2" onClick={sendInterest} disabled={loading}>
+            <Heart className="w-4 h-4" /> Send Interest
+          </Button>
+        ) : interest.status === "pending" ? (
+          <Button variant="outline" className="flex-1 gap-2" disabled>
+            <Clock className="w-4 h-4" /> Interest Pending
+          </Button>
+        ) : interest.status === "accepted" ? (
+          <Button variant="outline" className="flex-1 gap-2 border-green-500 text-green-600" disabled>
+            <CheckCircle2 className="w-4 h-4" /> Interest Accepted
+          </Button>
+        ) : (
+          <Button variant="outline" className="flex-1 gap-2" disabled>
+            Interest Declined
+          </Button>
+        )}
+        <Button variant={isShortlisted ? "default" : "outline"} size="icon" onClick={toggleShortlist}>
+          <Heart className={`w-4 h-4 ${isShortlisted ? "fill-current" : ""}`} />
+        </Button>
+      </div>
+      {canMessage && (
+        <Button variant="warm" className="w-full gap-2" onClick={() => navigate(`/messages?with=${profileId}`)}>
+          <MessageCircle className="w-4 h-4" /> Send Message
+        </Button>
+      )}
+      {interest?.status === "accepted" && !isPremiumOrAbove && (
+        <p className="text-xs text-center text-muted-foreground">Upgrade to <span className="text-primary font-medium cursor-pointer" onClick={() => navigate("/membership")}>Premium</span> to message</p>
+      )}
+    </div>
+  );
+};
+
 const ProfileDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -213,27 +267,8 @@ const ProfileDetail = () => {
                 ))}
               </div>
 
-              {/* Quick Actions */}
-              <div className="flex gap-3">
-                <Button variant="hero" className="flex-1 gap-2">
-                  <Heart className="w-4 h-4" /> Send Interest
-                </Button>
-                <Button variant="outline" size="icon" onClick={() => navigate(`/messages?with=${profile.id}`)}>
-                  <MessageCircle className="w-4 h-4" />
-                </Button>
-                <Button variant="outline" size="icon">
-                  <Phone className="w-4 h-4" />
-                </Button>
-              </div>
-
-              {/* Full-width Send Message */}
-              <Button
-                variant="warm"
-                className="w-full gap-2"
-                onClick={() => navigate(`/messages?with=${profile.id}`)}
-              >
-                <MessageCircle className="w-4 h-4" /> Send Message
-              </Button>
+              {/* Quick Actions — Interest, Shortlist, Message */}
+              <ProfileActions profileId={profile.id} navigate={navigate} />
 
               {/* Quick Stats */}
               <div className="bg-card rounded-2xl border border-border/50 p-5 shadow-card space-y-1">

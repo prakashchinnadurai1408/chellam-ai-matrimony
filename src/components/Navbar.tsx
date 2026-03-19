@@ -8,12 +8,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
 
 const navLinks = [
+  { label: "Dashboard", href: "/dashboard", authOnly: true },
   { label: "Search", href: "/search" },
+  { label: "Interests", href: "/interests", authOnly: true },
   { label: "Messages", href: "/messages", authOnly: true },
-  { label: "Preferences", href: "/preferences", authOnly: true },
+  { label: "Membership", href: "/membership", authOnly: true },
   { label: "How It Works", href: "#how-it-works" },
   { label: "Pricing", href: "#pricing" },
-  { label: "Success Stories", href: "#success-stories" },
 ];
 
 const Navbar = () => {

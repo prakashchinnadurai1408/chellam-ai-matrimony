@@ -8,11 +8,14 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+import { IndianRupee } from "lucide-react";
+
 const sidebarLinks = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Users", href: "/admin/users", icon: Users },
   { label: "Moderation", href: "/admin/moderation", icon: Shield },
   { label: "Messages", href: "/admin/messages", icon: MessageCircle },
+  { label: "Payments", href: "/admin/payments", icon: IndianRupee },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
