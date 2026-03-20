@@ -10,9 +10,12 @@ import { Button } from "@/components/ui/button";
 
 import { IndianRupee } from "lucide-react";
 
+import { UserPlus } from "lucide-react";
+
 const sidebarLinks = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Users", href: "/admin/users", icon: Users },
+  { label: "Create User", href: "/admin/create-user", icon: UserPlus },
   { label: "Moderation", href: "/admin/moderation", icon: Shield },
   { label: "Messages", href: "/admin/messages", icon: MessageCircle },
   { label: "Payments", href: "/admin/payments", icon: IndianRupee },
