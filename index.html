@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#D946EF" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Chellam" />
+    <title>Chellam Matrimony – AI-Powered Matchmaking</title>
+    <meta name="description" content="Find your perfect life partner with Chellam's AI-powered matrimonial platform. Verified profiles, intelligent compatibility matching, and community-aware matchmaking.">
+    <meta name="keywords" content="matrimony, marriage, match-making, AI, horoscope, community, verified profiles, Chellam">
+    <meta name="author" content="Chellam Matrimony" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Chellam Matrimony – AI-Powered Matchmaking">
+    <meta property="og:description" content="Find your perfect life partner with Chellam's AI-powered platform. Verified profiles & intelligent compatibility.">
+    <meta property="og:image" content="/og-image.png">
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Chellam Matrimony – AI-Powered Matchmaking">
+    <meta name="twitter:description" content="Find your perfect life partner with Chellam's AI-powered platform. Verified profiles & intelligent compatibility.">
+    <meta name="twitter:image" content="/twitter-image.png">
+
+    <script>
+      // Prevent theme flash
+      (function() {
+        const theme = localStorage.getItem('theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
