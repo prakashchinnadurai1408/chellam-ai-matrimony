@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Heart, ArrowLeft, ArrowRight, User, GraduationCap, Users, Sparkles,
-  CheckCircle2, Loader2, Camera, X as XIcon, Lock, Moon, Coffee, Eye
+  CheckCircle2, Loader2, Camera, X as XIcon, Moon, Coffee, Eye
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,7 +16,6 @@ import { supabase } from "@/integrations/supabase/client";
 // ==========================================
 
 const STEPS = [
-  { label: "Password", icon: Lock },
   { label: "Basic Info", icon: User },
   { label: "Horoscope", icon: Moon },
   { label: "Education", icon: GraduationCap },
@@ -59,7 +58,6 @@ const SELECT_OPTIONS = {
 };
 
 interface FormData {
-  password: string; confirm_password: string;
   first_name: string; last_name: string; gender: string; date_of_birth: string;
   religion: string; community: string; location: string; state: string;
   height: string; marital_status: string; complexion: string; physical_status: string;
@@ -84,7 +82,6 @@ interface FormData {
 }
 
 const emptyForm: FormData = {
-  password: "", confirm_password: "",
   first_name: "", last_name: "", gender: "", date_of_birth: "",
   religion: "", community: "", location: "", state: "",
   height: "", marital_status: "", complexion: "", physical_status: "",
@@ -231,29 +228,15 @@ const CreateProfile = () => {
     }));
   };
 
-  // Password strength
-  const passwordStrength = () => {
-    const p = form.password;
-    let score = 0;
-    if (p.length >= 8) score++;
-    if (/[A-Z]/.test(p)) score++;
-    if (/[0-9]/.test(p)) score++;
-    if (/[^A-Za-z0-9]/.test(p)) score++;
-    return ["", "Weak", "Fair", "Strong", "Very Strong"][score] || "";
-  };
-
-  const passwordsMatch = form.password === form.confirm_password && form.confirm_password.length > 0;
-
   const canProceed = () => {
     switch (step) {
-      case 0: return form.password.length >= 8 && passwordsMatch;
-      case 1: return form.first_name && form.gender && form.date_of_birth && form.religion;
-      case 2: return true; // Horoscope is optional
-      case 3: return form.education && form.profession;
-      case 4: return form.family_type;
-      case 5: return true; // Lifestyle optional
-      case 6: return true; // Preferences optional
-      case 7: return true; // Preview
+      case 0: return !!(form.first_name && form.gender && form.date_of_birth && form.religion);
+      case 1: return true; // Horoscope is optional
+      case 2: return !!(form.education && form.profession);
+      case 3: return !!form.family_type;
+      case 4: return true; // Lifestyle optional
+      case 5: return true; // Preferences optional
+      case 6: return true; // Preview
       default: return true;
     }
   };
@@ -297,30 +280,7 @@ const CreateProfile = () => {
   };
 
   const stepContent = [
-    // Step 1: Password
-    <div key="0" className="space-y-4 max-w-md mx-auto">
-      <TextField label="New Password *" value={form.password} onChange={(v) => update("password", v)} type="password" placeholder="Min 8 chars, uppercase, number, special" />
-      {form.password && (
-        <div className="flex items-center gap-2">
-          <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-            <div className={`h-full rounded-full transition-all ${
-              passwordStrength() === "Very Strong" ? "w-full bg-green-500" :
-              passwordStrength() === "Strong" ? "w-3/4 bg-teal-500" :
-              passwordStrength() === "Fair" ? "w-1/2 bg-amber-500" : "w-1/4 bg-red-500"
-            }`} />
-          </div>
-          <span className="text-xs text-muted-foreground">{passwordStrength()}</span>
-        </div>
-      )}
-      <TextField label="Confirm Password *" value={form.confirm_password} onChange={(v) => update("confirm_password", v)} type="password" placeholder="Re-enter password" />
-      {form.confirm_password && (
-        <p className={`text-xs ${passwordsMatch ? "text-green-600" : "text-destructive"}`}>
-          {passwordsMatch ? "✓ Passwords match" : "✗ Passwords do not match"}
-        </p>
-      )}
-    </div>,
-
-    // Step 2: Basic Info + Photos
+    // Step 1: Basic Info + Photos
     <div key="1" className="space-y-6">
       <div className="space-y-3 pb-4 border-b border-border">
         <label className="text-sm font-medium text-foreground">Upload Photos (1–5)</label>
@@ -500,7 +460,7 @@ const CreateProfile = () => {
             Chellam<span className="text-primary">.</span>
           </span>
           <span className="text-sm text-muted-foreground ml-2">Create Your Profile</span>
-          <span className="ml-auto text-xs text-muted-foreground">~8 min</span>
+          <span className="ml-auto text-xs text-muted-foreground">~7 min</span>
         </div>
       </div>
 
@@ -539,14 +499,13 @@ const CreateProfile = () => {
           >
             <h2 className="font-display text-xl font-bold text-foreground mb-1">{STEPS[step].label}</h2>
             <p className="text-sm text-muted-foreground mb-6">
-              {step === 0 && "Set a secure password for your account."}
-              {step === 1 && "Tell us about yourself — this helps find your best matches."}
-              {step === 2 && "Horoscope details enable Guna Milan matching (optional but recommended)."}
-              {step === 3 && "Your education and career details help find compatible matches."}
-              {step === 4 && "Family background helps us find culturally aligned matches."}
-              {step === 5 && "Your lifestyle preferences help finding compatible partners."}
-              {step === 6 && "Describe your ideal partner — our engine will do the rest!"}
-              {step === 7 && "Review your profile before publishing. You can edit any section."}
+              {step === 0 && "Tell us about yourself — this helps find your best matches."}
+              {step === 1 && "Horoscope details enable Guna Milan matching (optional but recommended)."}
+              {step === 2 && "Your education and career details help find compatible matches."}
+              {step === 3 && "Family background helps us find culturally aligned matches."}
+              {step === 4 && "Your lifestyle preferences help finding compatible partners."}
+              {step === 5 && "Describe your ideal partner — our engine will do the rest!"}
+              {step === 6 && "Review your profile before publishing. You can edit any section."}
             </p>
 
             {stepContent[step]}

@@ -43,7 +43,7 @@ interface AuthContextType {
   user: User | null;
   profile: ProfileData | null;
   loading: boolean;
-  login: (phone: string, password?: string) => Promise<void>;
+  login: (phone: string) => Promise<void>;
   loginWithGoogle: (redirectPath?: string) => Promise<void>;
   logout: () => Promise<void>;
   completeProfile: (data: Partial<ProfileData>) => Promise<void>;
@@ -61,8 +61,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .from("profiles")
       .select("*")
       .eq("user_id", userId)
-      .single();
-    if (data) setProfile(data as ProfileData);
+      .maybeSingle();
+    setProfile(data ? (data as ProfileData) : null);
     return data;
   };
 
@@ -96,29 +96,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isAuthenticated = !!user;
   const isProfileComplete = profile?.profile_complete ?? false;
 
-  const login = async (phone: string, passwordOverride?: string) => {
-    // Check if it's admin login
-    const isAdmin = phone.toLowerCase() === "admin";
-    const email = isAdmin ? "admin@chellam.dev" : `${phone}@chellam.dev`;
-    const password = isAdmin ? (passwordOverride || "Admin@1408") : (passwordOverride || `chellam_${phone}_1234`);
+  const login = async (phone: string) => {
+    const email = `${phone}@chellam.dev`;
+    const password = `chellam_${phone}_1234`;
 
-    // Try sign up first, then sign in
+    // Try sign up first (registers new users), then sign in
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { 
-        data: { 
-          phone: isAdmin ? null : phone,
-          is_admin_signup: isAdmin 
-        } 
-      },
+      options: { data: { phone } },
     });
 
     if (signUpError && !signUpError.message.includes("already registered")) {
       throw signUpError;
     }
 
-    // If user already exists or just signed up, sign in
+    // Sign in (works for both existing and just-registered users)
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -145,10 +138,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const completeProfile = async (data: Partial<ProfileData>) => {
     if (!user) return;
 
+    // Persist the phone from auth metadata if not already provided
+    const metaPhone = user.user_metadata?.phone as string | undefined;
+    const phoneToSave = data.phone ?? metaPhone ?? undefined;
+
     const { error } = await supabase
       .from("profiles")
       .update({
         ...data,
+        ...(phoneToSave ? { phone: phoneToSave } : {}),
         profile_complete: true,
       })
       .eq("user_id", user.id);
