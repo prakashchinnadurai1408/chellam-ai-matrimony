@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate, NavigateFunction } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInterestActions } from "@/hooks/useInterestActions";
@@ -168,8 +168,8 @@ const ProfileDetail = () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", id)
-        .single();
+        .eq("user_id", id)
+        .maybeSingle();
 
       if (data) {
         setProfileData(data as ProfileData);
@@ -177,7 +177,7 @@ const ProfileDetail = () => {
       setLoading(false);
 
       // Record profile view
-      if (user && data.user_id !== user.id) {
+      if (user && data && data.user_id !== user.id) {
         await supabase.from("profile_views").insert({
           viewer_id: user.id,
           viewed_id: data.user_id,
@@ -215,8 +215,8 @@ const ProfileDetail = () => {
   const age = getAge(profile.date_of_birth);
   const name = [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "User";
 
-  // Generate compatibility scores dynamically based on viewer
-  const generateCompatibility = () => {
+  // Memoize compatibility scores so they don't re-randomise on every render
+  const compatibility = useMemo(() => {
     const base = profile.match_score || 78;
     return {
       overall: Math.min(99, base),
@@ -237,9 +237,8 @@ const ProfileDetail = () => {
         profile.community ? `${profile.community} community connection strengthens cultural bond` : "Shared interests create opportunities for deep bonding",
       ],
     };
-  };
-
-  const compatibility = generateCompatibility();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile.id]);
 
   return (
     <div className="min-h-screen bg-background">

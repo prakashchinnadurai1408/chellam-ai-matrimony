@@ -69,7 +69,7 @@ const Preferences = () => {
         .from("partner_preferences")
         .select("*")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
       if (data) {
         setAgeRange([data.min_age ?? 21, data.max_age ?? 35]);
         setMinHeight(data.min_height ?? "");
@@ -110,7 +110,7 @@ const Preferences = () => {
         .from("partner_preferences")
         .select("id")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (existing) {
         const { error } = await supabase

@@ -51,7 +51,7 @@ const Interests = () => {
           .from("profiles")
           .select("first_name, last_name, photo_url, location, profession, user_id")
           .eq("user_id", item[userIdKey])
-          .single();
+          .maybeSingle();
         enriched.push({ ...item, profile });
       }
       return enriched;

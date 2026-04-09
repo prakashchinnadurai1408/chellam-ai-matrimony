@@ -57,7 +57,7 @@ const Membership = () => {
 
   useEffect(() => {
     const fetchSettings = async () => {
-      const { data } = await supabase.from("payment_settings").select("*").limit(1).single();
+      const { data } = await supabase.from("payment_settings").select("*").limit(1).maybeSingle();
       setSettings(data);
     };
     fetchSettings();

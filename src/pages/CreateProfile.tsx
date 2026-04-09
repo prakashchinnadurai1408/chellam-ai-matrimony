@@ -278,7 +278,7 @@ const CreateProfile = () => {
         first_name: form.first_name, last_name: form.last_name,
         gender: form.gender, date_of_birth: form.date_of_birth,
         religion: form.religion, community: form.community,
-        caste: form.community, location: form.location, state: form.state,
+        caste: form.caste, location: form.location, state: form.state,
         education: form.education, profession: form.profession,
         income: form.income, height: form.height,
         marital_status: form.marital_status, bio: form.bio,
