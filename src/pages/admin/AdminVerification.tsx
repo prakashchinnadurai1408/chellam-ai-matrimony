@@ -60,12 +60,12 @@ const AdminVerification = () => {
     setLoading(true);
     let query = supabase
       .from("profiles")
-      .select("id,user_id,first_name,last_name,phone,gender,location,religion,education,profession,photo_url,verified,profile_complete,created_at,updated_at")
+      .select("id,user_id,first_name,last_name,phone,gender,location,religion,education,profession,photo_url,verified,profile_complete,status,created_at,updated_at" as any)
       .eq("profile_complete", true);
 
-    if (tab === "pending") query = query.eq("verified", false);
-    else if (tab === "approved") query = query.eq("verified", true);
-    else query = query.eq("verified", false).not("status", "is", null);
+    if (tab === "pending") query = (query as any).eq("verified", false).or("status.eq.active,status.is.null");
+    else if (tab === "approved") query = (query as any).eq("verified", true);
+    else query = (query as any).eq("verified", false).eq("status", "rejected");
 
     if (search) query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,phone.ilike.%${search}%`);
 

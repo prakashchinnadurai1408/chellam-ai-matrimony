@@ -68,8 +68,8 @@ const AdminReports = () => {
       supabase.from("profiles").select("*", { count: "exact", head: true }),
       supabase.from("profiles").select("*", { count: "exact", head: true }).eq("profile_complete", true),
       supabase.from("profiles").select("*", { count: "exact", head: true }).eq("verified", true),
-      supabase.from("profiles").select("*", { count: "exact", head: true }).eq("gender", "male"),
-      supabase.from("profiles").select("*", { count: "exact", head: true }).eq("gender", "female"),
+      supabase.from("profiles").select("*", { count: "exact", head: true }).eq("gender", "Male"),
+      supabase.from("profiles").select("*", { count: "exact", head: true }).eq("gender", "Female"),
       supabase.from("profiles").select("created_at").gte("created_at", new Date(Date.now() - 30 * 86400000).toISOString()).order("created_at"),
       supabase.from("profiles").select("location").not("location", "is", null).limit(500),
     ]);

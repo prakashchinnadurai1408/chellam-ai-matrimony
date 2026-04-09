@@ -102,8 +102,13 @@ const AdminSubscriptions = () => {
     setOverrideLoading(true);
 
     const months = parseInt(overrideForm.months) || 1;
-    const expiresAt = new Date();
-    expiresAt.setMonth(expiresAt.getMonth() + months);
+    const now = new Date();
+    // Safe month addition: construct from year/month parts to avoid day-overflow
+    // (e.g. Jan 31 + 1 month should land on Feb 28, not Mar 3)
+    const targetMonth = now.getMonth() + months;
+    const expiresAt = new Date(now.getFullYear() + Math.floor(targetMonth / 12), targetMonth % 12, 1);
+    const lastDay = new Date(expiresAt.getFullYear(), expiresAt.getMonth() + 1, 0).getDate();
+    expiresAt.setDate(Math.min(now.getDate(), lastDay));
 
     // Deactivate existing active subscriptions
     await supabase.from("memberships").update({ is_active: false }).eq("user_id", resolvedUserId).eq("is_active", true);

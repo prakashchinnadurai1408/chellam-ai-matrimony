@@ -25,8 +25,8 @@ const AdminMessages = () => {
     const enriched = [];
     for (const c of convos) {
       const [{ data: p1 }, { data: p2 }, { count }] = await Promise.all([
-        supabase.from("profiles").select("first_name, last_name").eq("user_id", c.user1_id).single(),
-        supabase.from("profiles").select("first_name, last_name").eq("user_id", c.user2_id).single(),
+        supabase.from("profiles").select("first_name, last_name").eq("user_id", c.user1_id).maybeSingle(),
+        supabase.from("profiles").select("first_name, last_name").eq("user_id", c.user2_id).maybeSingle(),
         supabase.from("messages").select("*", { count: "exact", head: true }).eq("conversation_id", c.id),
       ]);
 
