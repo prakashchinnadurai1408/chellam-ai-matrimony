@@ -67,8 +67,14 @@ const Dashboard = () => {
       .eq("user_id", user.id)
       .maybeSingle();
 
+    // Guard: profile must exist with a known gender
+    if (!myProfile?.gender) {
+      setRefreshing(false);
+      return;
+    }
+
     // Get potential matches (opposite gender, exclude self)
-    const oppositeGender = myProfile?.gender === "Male" ? "Female" : "Male";
+    const oppositeGender = myProfile.gender === "Male" ? "Female" : "Male";
     const { data: candidates } = await supabase
       .from("profiles")
       .select("*")
@@ -78,7 +84,6 @@ const Dashboard = () => {
       .limit(50);
 
     if (!candidates || candidates.length === 0) {
-      setLoading(false);
       setRefreshing(false);
       return;
     }
@@ -132,18 +137,20 @@ const Dashboard = () => {
     scored.sort((a, b) => b.score - a.score);
     const top10 = scored.slice(0, 10);
 
-    // Delete old matches for today and insert new
+    // Delete old matches for today then batch-insert new ones atomically
     const today = new Date().toISOString().split("T")[0];
     await supabase.from("daily_matches").delete().eq("user_id", user.id).eq("match_date", today);
 
-    for (const m of top10) {
-      await supabase.from("daily_matches").insert({
-        user_id: user.id,
-        match_user_id: m.candidate.user_id,
-        compatibility_score: m.score,
-        match_reasons: m.reasons,
-        match_date: today,
-      });
+    if (top10.length > 0) {
+      await supabase.from("daily_matches").insert(
+        top10.map((m) => ({
+          user_id: user.id,
+          match_user_id: m.candidate.user_id,
+          compatibility_score: m.score,
+          match_reasons: m.reasons,
+          match_date: today,
+        }))
+      );
     }
 
     setRefreshing(false);

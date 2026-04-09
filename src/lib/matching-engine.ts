@@ -77,8 +77,8 @@ export function computePreferenceScore(
 ): PreferenceScoreResult {
 
   // 1. Religion (20 pts)
-  const religionMatched = isAnyOrEmpty(preferences.religions) || 
-    (candidate.religion ? preferences.religions!.includes(candidate.religion) : false);
+  const religionMatched = isAnyOrEmpty(preferences.religions) ||
+    (candidate.religion ? preferences.religions?.includes(candidate.religion) ?? false : false);
 
   // 2. Age (15 pts)
   const ageMatched = !preferences.min_age || !preferences.max_age || !candidate.age ||
@@ -86,11 +86,11 @@ export function computePreferenceScore(
 
   // 3. Location (10 pts)
   const locationMatched = isAnyOrEmpty(preferences.states) ||
-    (candidate.state ? preferences.states!.includes(candidate.state) : false);
+    (candidate.state ? preferences.states?.includes(candidate.state) ?? false : false);
 
   // 4. Caste (10 pts)
   const casteMatched = isAnyOrEmpty(preferences.castes) ||
-    (candidate.caste ? preferences.castes!.includes(candidate.caste) : false);
+    (candidate.caste ? preferences.castes?.includes(candidate.caste) ?? false : false);
 
   // 5. Education (10 pts)
   const eduMinLevel = EDUCATION_HIERARCHY[preferences.education_min || ""] || 0;
@@ -99,24 +99,34 @@ export function computePreferenceScore(
 
   // 6. Diet (5 pts)
   const dietMatched = isAnyOrEmpty(preferences.diet_prefs) ||
-    (candidate.diet ? preferences.diet_prefs!.includes(candidate.diet) : false);
+    (candidate.diet ? preferences.diet_prefs?.includes(candidate.diet) ?? false : false);
 
   // 7. Occupation (5 pts)
   const occupationMatched = isAnyOrEmpty(preferences.employed_in) ||
-    (candidate.employed_in ? preferences.employed_in!.includes(candidate.employed_in) : false);
+    (candidate.employed_in ? preferences.employed_in?.includes(candidate.employed_in) ?? false : false);
 
-  // 8. Income (5 pts) — simplified: any income preference is a match
-  const incomeMatched = !preferences.min_income || !candidate.income || true;
+  // 8. Income (5 pts)
+  const INCOME_ORDER = [
+    "No Income", "Below 1 Lakh", "1-2 Lakhs", "2-3 Lakhs", "3-5 Lakhs",
+    "5-7 Lakhs", "7-10 Lakhs", "10-15 Lakhs", "15-20 Lakhs", "20-30 Lakhs",
+    "30-50 Lakhs", "50 Lakhs - 1 Crore", "1 Crore+",
+  ];
+  const candidateIncomeIdx = candidate.income ? INCOME_ORDER.indexOf(candidate.income) : -1;
+  const minIncomeIdx = preferences.min_income ? INCOME_ORDER.indexOf(preferences.min_income) : -1;
+  const maxIncomeIdx = preferences.max_income ? INCOME_ORDER.indexOf(preferences.max_income) : -1;
+  const incomeMatched = !preferences.min_income || candidateIncomeIdx < 0 ||
+    (candidateIncomeIdx >= (minIncomeIdx >= 0 ? minIncomeIdx : 0) &&
+     (maxIncomeIdx < 0 || candidateIncomeIdx <= maxIncomeIdx));
 
   // 9. Family Values (5 pts)
   const valuesMatched = isAnyOrEmpty(preferences.family_values) ||
-    (candidate.family_values ? preferences.family_values!.includes(candidate.family_values) : false);
+    (candidate.family_values ? preferences.family_values?.includes(candidate.family_values) ?? false : false);
 
   // 10. Height (5 pts)
   const candH = heightToInches(candidate.height);
   const minH = heightToInches(preferences.min_height);
   const maxH = heightToInches(preferences.max_height);
-  const heightMatched = minH === 0 && maxH === 0 || 
+  const heightMatched = (minH === 0 && maxH === 0) ||
     (candH >= (minH || 0) && (maxH === 0 || candH <= maxH));
 
   const breakdown: PreferenceScoreBreakdown = {

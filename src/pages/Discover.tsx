@@ -226,7 +226,13 @@ const Discover = () => {
       return;
     }
 
-    const oppositeGender = myProfile?.gender === "Male" ? "Female" : "Male";
+    if (!myProfile?.gender) {
+      setProfiles([]);
+      setLoading(false);
+      return;
+    }
+
+    const oppositeGender = myProfile.gender === "Male" ? "Female" : "Male";
 
     const { data: candidates } = await supabase
       .from("profiles")
@@ -272,10 +278,12 @@ const Discover = () => {
       receiver_id: profile.user_id,
     });
 
-    if (error && !error.message.includes("duplicate")) {
-      toast.error("Could not send interest");
-    } else {
+    if (!error) {
       toast.success(`Interest sent to ${profile.first_name}! 💕`);
+    } else if (error.message.includes("duplicate") || error.code === "23505") {
+      toast(`Already sent interest to ${profile.first_name}`);
+    } else {
+      toast.error("Could not send interest");
     }
 
     setStats((s) => ({ ...s, liked: s.liked + 1 }));
