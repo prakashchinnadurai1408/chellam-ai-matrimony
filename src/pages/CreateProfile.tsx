@@ -214,7 +214,7 @@ const CreateProfile = () => {
   useEffect(() => {
     if (loading) return;
     if (!isAuthenticated) navigate("/auth");
-    else if (isProfileComplete) navigate("/");
+    else if (isProfileComplete) navigate("/dashboard");
   }, [isAuthenticated, isProfileComplete, loading, navigate]);
 
   const update = (field: keyof FormData, value: any) => setForm((f) => ({ ...f, [field]: value }));
@@ -284,7 +284,7 @@ const CreateProfile = () => {
         ...(primaryPhoto ? { photo_url: primaryPhoto } : {}),
       });
       toast({ title: "Profile Created! 🎉", description: "Your profile is under review — typically approved within 4 hours." });
-      navigate("/");
+      navigate("/dashboard");
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {

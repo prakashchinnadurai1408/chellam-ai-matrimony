@@ -82,17 +82,28 @@ const Interests = () => {
   }, [user]);
 
   const handleAccept = async (id: string) => {
-    await supabase.from("interests").update({ status: "accepted", updated_at: new Date().toISOString() }).eq("id", id);
+    const { error } = await supabase
+      .from("interests")
+      .update({ status: "accepted", updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) { toast.error("Failed to accept interest"); return; }
     toast.success("Interest accepted!");
+    fetchAll();
   };
 
   const handleDecline = async (id: string) => {
-    await supabase.from("interests").update({ status: "declined", updated_at: new Date().toISOString() }).eq("id", id);
+    const { error } = await supabase
+      .from("interests")
+      .update({ status: "declined", updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) { toast.error("Failed to decline interest"); return; }
     toast.success("Interest declined");
+    fetchAll();
   };
 
   const handleWithdraw = async (id: string) => {
-    await supabase.from("interests").delete().eq("id", id);
+    const { error } = await supabase.from("interests").delete().eq("id", id);
+    if (error) { toast.error("Failed to withdraw interest"); return; }
     toast.success("Interest withdrawn");
     fetchAll();
   };

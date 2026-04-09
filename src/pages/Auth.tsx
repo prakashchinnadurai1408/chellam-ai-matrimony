@@ -30,7 +30,7 @@ const Auth = () => {
   // Redirect once authenticated
   useEffect(() => {
     if (loading) return;
-    if (isAuthenticated && isProfileComplete) navigate("/");
+    if (isAuthenticated && isProfileComplete) navigate("/dashboard");
     else if (isAuthenticated && !isProfileComplete) navigate("/create-profile");
   }, [isAuthenticated, isProfileComplete, loading, navigate]);
 

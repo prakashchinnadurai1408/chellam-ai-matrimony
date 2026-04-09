@@ -121,7 +121,7 @@ const SearchPage = () => {
         const mapped = data.map((p) => {
           const age = getAgeFromDate(p.date_of_birth);
           return {
-            id: p.id,
+            id: p.user_id,    // use user_id so /profile/:id works correctly
             name: [p.first_name, p.last_name].filter(Boolean).join(" ") || "User",
             age,
             gender: p.gender || "",
@@ -132,7 +132,7 @@ const SearchPage = () => {
             educationDetail: p.education_detail || p.education || "",
             profession: p.profession || "",
             income: p.income || "",
-            matchScore: p.match_score || Math.floor(Math.random() * 15 + 80),
+            matchScore: p.match_score || 75,  // deterministic fallback
             verified: p.verified || false,
             community: p.community || "",
             religion: p.religion || "",
@@ -164,7 +164,7 @@ const SearchPage = () => {
       }
 
       const [{ data: myProfile }, { data: myPreferences }, { data: candidates, error: candidateError }] = await Promise.all([
-        supabase.from("profiles").select("*").eq("user_id", session.user.id).single(),
+        supabase.from("profiles").select("*").eq("user_id", session.user.id).maybeSingle(),
         supabase.from("partner_preferences").select("*").eq("user_id", session.user.id).maybeSingle(),
         supabase.from("profiles").select("*").neq("user_id", session.user.id).eq("profile_complete", true).limit(50),
       ]);
@@ -205,8 +205,11 @@ const SearchPage = () => {
     }
   };
 
-  // Combine DB profiles with mock data
-  const combinedProfiles = useMemo(() => [...dbProfiles, ...allProfiles], [dbProfiles]);
+  // Use DB profiles when available; fall back to mock data only when DB is empty
+  const combinedProfiles = useMemo(
+    () => (dbProfiles.length > 0 ? dbProfiles : allProfiles),
+    [dbProfiles]
+  );
 
   // Filters
   const [ageRange, setAgeRange] = useState([21, 35]);
