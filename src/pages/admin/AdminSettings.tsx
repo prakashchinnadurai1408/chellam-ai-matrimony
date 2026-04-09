@@ -32,7 +32,7 @@ const AdminSettings = () => {
         .from("profiles")
         .select("first_name, last_name, phone")
         .eq("user_id", r.user_id)
-        .single();
+        .maybeSingle();
       enriched.push({
         ...r,
         name: [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Unknown",
@@ -57,7 +57,7 @@ const AdminSettings = () => {
       .from("profiles")
       .select("user_id")
       .eq("phone", newPhone.trim())
-      .single();
+      .maybeSingle();
 
     if (!profile) {
       toast.error("User not found with that phone number");

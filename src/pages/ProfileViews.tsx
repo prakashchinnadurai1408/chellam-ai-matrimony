@@ -56,7 +56,7 @@ const ProfileViews = () => {
               .from("profiles")
               .select("first_name, last_name, photo_url, profession, location, user_id")
               .eq("user_id", v.viewer_id)
-              .single();
+              .maybeSingle();
             enriched.push({ ...v, viewer_profile: profile || undefined });
           }
           setViews(enriched);

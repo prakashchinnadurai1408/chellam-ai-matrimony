@@ -67,7 +67,7 @@ const Notifications = () => {
           .from("profiles")
           .select("first_name, last_name")
           .eq("user_id", interest.sender_id)
-          .single();
+          .maybeSingle();
 
         const name = profile ? [profile.first_name, profile.last_name].filter(Boolean).join(" ") : "Someone";
 
@@ -100,7 +100,7 @@ const Notifications = () => {
           .from("profiles")
           .select("first_name, last_name")
           .eq("user_id", interest.receiver_id)
-          .single();
+          .maybeSingle();
 
         const name = profile ? [profile.first_name, profile.last_name].filter(Boolean).join(" ") : "Someone";
 

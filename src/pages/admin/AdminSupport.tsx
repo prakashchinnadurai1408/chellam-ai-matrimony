@@ -129,7 +129,7 @@ const AdminSupport = () => {
 
   const resolveUser = async () => {
     if (!form.phone) return;
-    const { data } = await supabase.from("profiles").select("user_id").eq("phone", form.phone).single();
+    const { data } = await supabase.from("profiles").select("user_id").eq("phone", form.phone).maybeSingle();
     if (data) setResolvedUserId(data.user_id);
     else toast({ title: "User not found", variant: "destructive" });
   };

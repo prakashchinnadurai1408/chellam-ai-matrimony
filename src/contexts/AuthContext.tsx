@@ -72,20 +72,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       async (event, session) => {
         setUser(session?.user ?? null);
         if (session?.user) {
-          // Use setTimeout to avoid Supabase client deadlock
-          setTimeout(() => fetchProfile(session.user.id), 0);
+          // Defer to avoid Supabase client deadlock; set loading=false AFTER
+          // profile is fetched so consumers never see a stale isProfileComplete
+          setTimeout(async () => {
+            await fetchProfile(session.user.id);
+            setLoading(false);
+          }, 0);
         } else {
           setProfile(null);
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Initialise from an existing session (page refresh / direct URL)
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id);
+        await fetchProfile(session.user.id);
       }
       setLoading(false);
     });

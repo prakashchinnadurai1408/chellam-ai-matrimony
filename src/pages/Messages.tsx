@@ -80,7 +80,7 @@ const MessagesPage = () => {
         .from("profiles")
         .select("first_name, last_name, photo_url, user_id")
         .eq("user_id", otherUserId)
-        .single();
+        .maybeSingle();
 
       // Get last message
       const { data: lastMsg } = await supabase
@@ -133,7 +133,7 @@ const MessagesPage = () => {
         .from("conversations")
         .insert({ user1_id: user.id, user2_id: startWithUserId })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         // Try reverse order
@@ -141,7 +141,7 @@ const MessagesPage = () => {
           .from("conversations")
           .insert({ user1_id: startWithUserId, user2_id: user.id })
           .select()
-          .single();
+          .maybeSingle();
         if (data2) {
           await fetchConversations();
           setActiveConversation(data2.id);

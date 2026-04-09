@@ -31,7 +31,7 @@ const AdminPayments = () => {
   }, [roleLoading, role]);
 
   const fetchSettings = async () => {
-    const { data } = await supabase.from("payment_settings").select("*").limit(1).single();
+    const { data } = await supabase.from("payment_settings").select("*").limit(1).maybeSingle();
     if (data) {
       setSettings(data);
       setUpiId(data.upi_id || "");
@@ -57,7 +57,7 @@ const AdminPayments = () => {
         .from("profiles")
         .select("first_name, last_name, phone")
         .eq("user_id", r.user_id)
-        .single();
+        .maybeSingle();
       enriched.push({
         ...r,
         name: [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Unknown",

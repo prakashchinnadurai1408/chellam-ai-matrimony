@@ -53,6 +53,13 @@ const Auth = () => {
     toast({ title: "OTP Sent!", description: `Verification code sent to +91 ${phone}` });
   };
 
+  // Auto-focus first OTP box when entering OTP step
+  useEffect(() => {
+    if (step === "otp") {
+      setTimeout(() => inputRefs.current[0]?.focus(), 80);
+    }
+  }, [step]);
+
   const handleOtpChange = (index: number, value: string) => {
     if (!/^\d?$/.test(value)) return;
     const newOtp = [...otp];
@@ -64,6 +71,17 @@ const Auth = () => {
 
   const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) inputRefs.current[index - 1]?.focus();
+  };
+
+  // Fill all 4 OTP boxes when user pastes (e.g. copy-pastes "1234")
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const digits = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 4);
+    if (!digits) return;
+    const newOtp = ["", "", "", ""].map((_, i) => digits[i] || "");
+    setOtp(newOtp);
+    setOtpError("");
+    inputRefs.current[Math.min(digits.length, 3)]?.focus();
   };
 
   const handleOtpSubmit = async () => {
@@ -244,6 +262,7 @@ const Auth = () => {
                       value={digit}
                       onChange={(e) => handleOtpChange(i, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                      onPaste={i === 0 ? handleOtpPaste : undefined}
                       className={`w-14 h-14 text-center text-2xl font-bold rounded-xl border-2 bg-card text-foreground outline-none transition-all ${
                         digit ? "border-primary shadow-sm" : "border-input"
                       } ${otpError ? "border-destructive" : ""} focus:border-primary focus:ring-2 focus:ring-ring`}
@@ -251,6 +270,10 @@ const Auth = () => {
                   ))}
                 </div>
                 {otpError && <p className="text-xs text-destructive text-center">{otpError}</p>}
+                <p className="text-xs text-center text-muted-foreground">
+                  For testing, use OTP{" "}
+                  <span className="font-mono font-bold text-foreground tracking-widest">1234</span>
+                </p>
 
                 <Button
                   variant="hero"

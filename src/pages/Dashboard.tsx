@@ -43,7 +43,7 @@ const Dashboard = () => {
         .from("profiles")
         .select("first_name, last_name, photo_url, location, profession, education, date_of_birth, community, religion, user_id")
         .eq("user_id", m.match_user_id)
-        .single();
+        .maybeSingle();
       if (profile) enriched.push({ ...m, profile });
     }
     setMatches(enriched);
@@ -59,13 +59,13 @@ const Dashboard = () => {
       .from("profiles")
       .select("*")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     const { data: myPrefs } = await supabase
       .from("partner_preferences")
       .select("*")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     // Get potential matches (opposite gender, exclude self)
     const oppositeGender = myProfile?.gender === "Male" ? "Female" : "Male";

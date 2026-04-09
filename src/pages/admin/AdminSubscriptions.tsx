@@ -91,7 +91,7 @@ const AdminSubscriptions = () => {
   const resolveUserByPhone = async (phone: string) => {
     if (!phone) return;
     setResolvingUser(true);
-    const { data } = await supabase.from("profiles").select("user_id,first_name,last_name").eq("phone", phone).single();
+    const { data } = await supabase.from("profiles").select("user_id,first_name,last_name").eq("phone", phone).maybeSingle();
     if (data) setResolvedUserId(data.user_id);
     else { toast({ title: "User not found", variant: "destructive" }); setResolvedUserId(null); }
     setResolvingUser(false);

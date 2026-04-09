@@ -230,10 +230,10 @@ const CreateProfile = () => {
 
   const canProceed = () => {
     switch (step) {
-      case 0: return !!(form.first_name && form.gender && form.date_of_birth && form.religion);
-      case 1: return true; // Horoscope is optional
-      case 2: return !!(form.education && form.profession);
-      case 3: return !!form.family_type;
+      case 0: return !!(form.first_name && form.gender && form.date_of_birth); // Basic Info
+      case 1: return !!form.religion; // Religion & Horoscope — religion required
+      case 2: return !!(form.education && form.profession); // Education
+      case 3: return !!form.family_type; // Family
       case 4: return true; // Lifestyle optional
       case 5: return true; // Preferences optional
       case 6: return true; // Preview
@@ -257,14 +257,27 @@ const CreateProfile = () => {
       const photoUrls = await uploadPhotos();
       const primaryPhoto = photoUrls.length > 0 ? photoUrls[0] : null;
       
+      // Convert manglik string selection → boolean (null = unknown)
+      const manglikBool =
+        form.manglik === "Yes" || form.manglik === "Partial / Anshik Manglik"
+          ? true
+          : form.manglik === "No"
+          ? false
+          : null;
+
       await completeProfile({
         first_name: form.first_name, last_name: form.last_name,
         gender: form.gender, date_of_birth: form.date_of_birth,
         religion: form.religion, community: form.community,
-        caste: form.caste, location: form.location, state: form.state,
+        caste: form.community,          // form collects "Caste / Community" as one field
+        location: form.location, state: form.state,
         education: form.education, profession: form.profession,
         income: form.income, height: form.height,
         marital_status: form.marital_status, bio: form.bio,
+        // Horoscope fields (form uses "raasi"; ProfileData uses "rashi")
+        nakshatra: form.nakshatra || null,
+        rashi: form.raasi || null,
+        manglik: manglikBool,
         father_occupation: form.father_occupation, mother_occupation: form.mother_occupation,
         siblings: `${form.brothers || 0} brothers, ${form.sisters || 0} sisters`,
         family_type: form.family_type, family_values: form.family_values,
