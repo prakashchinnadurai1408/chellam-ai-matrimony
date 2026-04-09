@@ -7,6 +7,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import AIChatbot from "@/components/AIChatbot";
 import MobileBottomNav from "@/components/MobileBottomNav";
+
+// Public pages
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
 import AdminLogin from "./pages/AdminLogin.tsx";
@@ -18,6 +20,18 @@ import Terms from "./pages/Terms.tsx";
 import Messages from "./pages/Messages.tsx";
 import Preferences from "./pages/Preferences.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import Membership from "./pages/Membership.tsx";
+import Interests from "./pages/Interests.tsx";
+import Dashboard from "./pages/Dashboard.tsx";
+import Discover from "./pages/Discover.tsx";
+import MyProfile from "./pages/MyProfile.tsx";
+import ProfileViews from "./pages/ProfileViews.tsx";
+import Notifications from "./pages/Notifications.tsx";
+import Settings from "./pages/Settings.tsx";
+import SuccessStoriesPage from "./pages/SuccessStoriesPage.tsx";
+import CommunityPortal from "./pages/CommunityPortal.tsx";
+
+// Admin pages — core
 import AdminDashboard from "./pages/admin/AdminDashboard.tsx";
 import AdminUsers from "./pages/admin/AdminUsers.tsx";
 import AdminModeration from "./pages/admin/AdminModeration.tsx";
@@ -29,16 +43,14 @@ import AdminResetPassword from "./pages/admin/AdminResetPassword.tsx";
 import AdminSuccessStories from "./pages/admin/AdminSuccessStories.tsx";
 import AdminRoleManagement from "./pages/admin/AdminRoleManagement.tsx";
 import AdminEmailCampaigns from "./pages/admin/AdminEmailCampaigns.tsx";
-import Membership from "./pages/Membership.tsx";
-import Interests from "./pages/Interests.tsx";
-import Dashboard from "./pages/Dashboard.tsx";
-import Discover from "./pages/Discover.tsx";
-import MyProfile from "./pages/MyProfile.tsx";
-import ProfileViews from "./pages/ProfileViews.tsx";
-import Notifications from "./pages/Notifications.tsx";
-import Settings from "./pages/Settings.tsx";
-import SuccessStoriesPage from "./pages/SuccessStoriesPage.tsx";
-import CommunityPortal from "./pages/CommunityPortal.tsx";
+
+// Admin pages — new BRD modules
+import AdminVerification from "./pages/admin/AdminVerification.tsx";
+import AdminSubscriptions from "./pages/admin/AdminSubscriptions.tsx";
+import AdminReports from "./pages/admin/AdminReports.tsx";
+import AdminSupport from "./pages/admin/AdminSupport.tsx";
+import AdminMatchmaking from "./pages/admin/AdminMatchmaking.tsx";
+import AdminNotifications from "./pages/admin/AdminNotifications.tsx";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +63,7 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <Routes>
+              {/* Public */}
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin-login" element={<AdminLogin />} />
@@ -71,6 +84,8 @@ const App = () => (
               <Route path="/settings" element={<Settings />} />
               <Route path="/success-stories" element={<SuccessStoriesPage />} />
               <Route path="/community/:slug" element={<CommunityPortal />} />
+
+              {/* Admin — core */}
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/admin/moderation" element={<AdminModeration />} />
@@ -82,6 +97,15 @@ const App = () => (
               <Route path="/admin/success-stories" element={<AdminSuccessStories />} />
               <Route path="/admin/roles" element={<AdminRoleManagement />} />
               <Route path="/admin/emails" element={<AdminEmailCampaigns />} />
+
+              {/* Admin — new BRD modules */}
+              <Route path="/admin/verification" element={<AdminVerification />} />
+              <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
+              <Route path="/admin/reports" element={<AdminReports />} />
+              <Route path="/admin/support" element={<AdminSupport />} />
+              <Route path="/admin/matchmaking" element={<AdminMatchmaking />} />
+              <Route path="/admin/notifications" element={<AdminNotifications />} />
+
               <Route path="*" element={<NotFound />} />
             </Routes>
             <AIChatbot />

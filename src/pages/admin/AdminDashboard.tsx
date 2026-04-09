@@ -1,99 +1,232 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, MessageCircle, Heart, Shield, TrendingUp, UserCheck, AlertTriangle } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Button } from "@/components/ui/button";
+import {
+  Users, MessageCircle, Heart, Shield, TrendingUp, UserCheck, AlertTriangle,
+  Clock, CreditCard, IndianRupee, Bell, ArrowRight, RefreshCw,
+} from "lucide-react";
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar,
+} from "recharts";
 
-const CHART_DATA = [
-  { name: 'Mon', signups: 45, matches: 12 },
-  { name: 'Tue', signups: 52, matches: 19 },
-  { name: 'Wed', signups: 38, matches: 15 },
-  { name: 'Thu', signups: 65, matches: 28 },
-  { name: 'Fri', signups: 48, matches: 22 },
-  { name: 'Sat', signups: 59, matches: 34 },
-  { name: 'Sun', signups: 72, matches: 41 },
-];
-
-interface Stats {
-  totalUsers: number;
-  completeProfiles: number;
-  verifiedProfiles: number;
-  totalConversations: number;
-  totalMessages: number;
-  incompleteProfiles: number;
-  recentSignups: number;
-}
+type DateRange = "today" | "7d" | "30d";
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState<Stats>({
-    totalUsers: 0, completeProfiles: 0, verifiedProfiles: 0,
-    totalConversations: 0, totalMessages: 0, incompleteProfiles: 0, recentSignups: 0,
+  const navigate = useNavigate();
+  const [dateRange, setDateRange] = useState<DateRange>("7d");
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    completeProfiles: 0,
+    verifiedProfiles: 0,
+    totalConversations: 0,
+    totalMessages: 0,
+    incompleteProfiles: 0,
+    recentSignups: 0,
+    pendingVerifications: 0,
+    pendingPayments: 0,
+    openReports: 0,
+    activeSubscriptions: 0,
+    revenueTotal: 0,
   });
   const [recentUsers, setRecentUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [chartData, setChartData] = useState<any[]>([]);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      const [
-        { count: totalUsers },
-        { count: completeProfiles },
-        { count: verifiedProfiles },
-        { count: totalConversations },
-        { count: totalMessages },
-        { count: incompleteProfiles },
-        { data: recent },
-      ] = await Promise.all([
-        supabase.from("profiles").select("*", { count: "exact", head: true }),
-        supabase.from("profiles").select("*", { count: "exact", head: true }).eq("profile_complete", true),
-        supabase.from("profiles").select("*", { count: "exact", head: true }).eq("verified", true),
-        supabase.from("conversations").select("*", { count: "exact", head: true }),
-        supabase.from("messages").select("*", { count: "exact", head: true }),
-        supabase.from("profiles").select("*", { count: "exact", head: true }).eq("profile_complete", false),
-        supabase.from("profiles").select("*").order("created_at", { ascending: false }).limit(5),
-      ]);
+  const fetchStats = async () => {
+    const rangeMs: Record<DateRange, number> = { today: 86400000, "7d": 7 * 86400000, "30d": 30 * 86400000 };
+    const since = new Date(Date.now() - rangeMs[dateRange]).toISOString();
+    const days = dateRange === "today" ? 1 : dateRange === "7d" ? 7 : 30;
 
-      // Count signups in last 7 days
-      const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
-      const { count: recentSignups } = await supabase
-        .from("profiles").select("*", { count: "exact", head: true })
-        .gte("created_at", weekAgo);
+    const [
+      { count: totalUsers },
+      { count: completeProfiles },
+      { count: verifiedProfiles },
+      { count: totalConversations },
+      { count: totalMessages },
+      { count: incompleteProfiles },
+      { count: recentSignups },
+      { count: pendingVerifications },
+      { count: pendingPayments },
+      { count: openReports },
+      { count: activeSubscriptions },
+      { data: recent },
+      { data: payments },
+    ] = await Promise.all([
+      supabase.from("profiles").select("*", { count: "exact", head: true }),
+      supabase.from("profiles").select("*", { count: "exact", head: true }).eq("profile_complete", true),
+      supabase.from("profiles").select("*", { count: "exact", head: true }).eq("verified", true),
+      supabase.from("conversations").select("*", { count: "exact", head: true }),
+      supabase.from("messages").select("*", { count: "exact", head: true }),
+      supabase.from("profiles").select("*", { count: "exact", head: true }).eq("profile_complete", false),
+      supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", since),
+      supabase.from("profiles").select("*", { count: "exact", head: true })
+        .eq("profile_complete", true).eq("verified", false),
+      supabase.from("payment_requests").select("*", { count: "exact", head: true })
+        .eq("status", "pending"),
+      supabase.from("user_reports").select("*", { count: "exact", head: true })
+        .eq("status", "open"),
+      supabase.from("memberships").select("*", { count: "exact", head: true }).eq("is_active", true),
+      supabase.from("profiles").select("*").order("created_at", { ascending: false }).limit(5),
+      supabase.from("payment_requests").select("amount").eq("status", "approved"),
+    ]);
 
-      setStats({
-        totalUsers: totalUsers || 0,
-        completeProfiles: completeProfiles || 0,
-        verifiedProfiles: verifiedProfiles || 0,
-        totalConversations: totalConversations || 0,
-        totalMessages: totalMessages || 0,
-        incompleteProfiles: incompleteProfiles || 0,
-        recentSignups: recentSignups || 0,
+    const revenueTotal = (payments || []).reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+
+    // Build chart data
+    const buckets: { name: string; signups: number; messages: number }[] = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 86400000);
+      buckets.push({
+        name: days <= 7
+          ? d.toLocaleDateString("en-IN", { weekday: "short" })
+          : d.toLocaleDateString("en-IN", { day: "numeric", month: "short" }),
+        signups: 0,
+        messages: 0,
       });
-      setRecentUsers(recent || []);
-      setLoading(false);
-    };
-    fetchStats();
-  }, []);
+    }
+
+    setStats({
+      totalUsers: totalUsers || 0,
+      completeProfiles: completeProfiles || 0,
+      verifiedProfiles: verifiedProfiles || 0,
+      totalConversations: totalConversations || 0,
+      totalMessages: totalMessages || 0,
+      incompleteProfiles: incompleteProfiles || 0,
+      recentSignups: recentSignups || 0,
+      pendingVerifications: pendingVerifications || 0,
+      pendingPayments: pendingPayments || 0,
+      openReports: openReports || 0,
+      activeSubscriptions: activeSubscriptions || 0,
+      revenueTotal,
+    });
+    setRecentUsers(recent || []);
+    setChartData(buckets);
+    setLoading(false);
+    setRefreshing(false);
+  };
+
+  useEffect(() => { fetchStats(); }, [dateRange]);
+
+  const handleRefresh = () => { setRefreshing(true); fetchStats(); };
 
   const statCards = [
-    { label: "Total Users", value: stats.totalUsers, icon: Users, color: "text-primary" },
-    { label: "Complete Profiles", value: stats.completeProfiles, icon: UserCheck, color: "text-accent" },
-    { label: "Verified Profiles", value: stats.verifiedProfiles, icon: Shield, color: "text-secondary" },
-    { label: "Conversations", value: stats.totalConversations, icon: MessageCircle, color: "text-primary" },
-    { label: "Messages Sent", value: stats.totalMessages, icon: Heart, color: "text-accent" },
-    { label: "Signups (7d)", value: stats.recentSignups, icon: TrendingUp, color: "text-secondary" },
-    { label: "Incomplete Profiles", value: stats.incompleteProfiles, icon: AlertTriangle, color: "text-destructive" },
+    { label: "Total Members", value: stats.totalUsers, icon: Users, color: "text-primary", bg: "bg-primary/10" },
+    { label: "Verified Profiles", value: stats.verifiedProfiles, icon: Shield, color: "text-green-600", bg: "bg-green-500/10" },
+    { label: "Active Subscriptions", value: stats.activeSubscriptions, icon: CreditCard, color: "text-blue-600", bg: "bg-blue-500/10" },
+    { label: "Total Revenue", value: `₹${(stats.revenueTotal / 100).toLocaleString("en-IN")}`, icon: IndianRupee, color: "text-emerald-600", bg: "bg-emerald-500/10", isString: true },
+    { label: "Conversations", value: stats.totalConversations, icon: MessageCircle, color: "text-violet-600", bg: "bg-violet-500/10" },
+    { label: "Messages Sent", value: stats.totalMessages, icon: Heart, color: "text-pink-600", bg: "bg-pink-500/10" },
+    { label: `New Signups (${dateRange})`, value: stats.recentSignups, icon: TrendingUp, color: "text-accent", bg: "bg-accent/10" },
+    { label: "Incomplete Profiles", value: stats.incompleteProfiles, icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10" },
+  ];
+
+  const pendingActions = [
+    {
+      label: "Profiles Awaiting Verification",
+      count: stats.pendingVerifications,
+      icon: Clock,
+      color: "text-amber-600",
+      bg: "bg-amber-500/10",
+      href: "/admin/verification",
+    },
+    {
+      label: "Pending Payment Requests",
+      count: stats.pendingPayments,
+      icon: CreditCard,
+      color: "text-blue-600",
+      bg: "bg-blue-500/10",
+      href: "/admin/payments",
+    },
+    {
+      label: "Open User Reports",
+      count: stats.openReports,
+      icon: AlertTriangle,
+      color: "text-destructive",
+      bg: "bg-destructive/10",
+      href: "/admin/moderation",
+    },
+  ];
+
+  const ranges: { label: string; value: DateRange }[] = [
+    { label: "Today", value: "today" },
+    { label: "7 Days", value: "7d" },
+    { label: "30 Days", value: "30d" },
   ];
 
   return (
     <AdminLayout>
       <div className="p-6 space-y-6">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">Platform overview and analytics</p>
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-display text-2xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-sm text-muted-foreground mt-1">Real-time platform overview</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-lg border border-border overflow-hidden">
+              {ranges.map((r) => (
+                <button
+                  key={r.value}
+                  onClick={() => setDateRange(r.value)}
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                    dateRange === r.value
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
+              <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+          </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Pending Action Alerts */}
+        {!loading && (stats.pendingVerifications > 0 || stats.pendingPayments > 0 || stats.openReports > 0) && (
+          <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-900/10">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold text-amber-800 dark:text-amber-400 flex items-center gap-2">
+                <Bell className="w-4 h-4" />
+                Pending Actions Required
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {pendingActions.map((a) => a.count > 0 && (
+                  <button
+                    key={a.label}
+                    onClick={() => navigate(a.href)}
+                    className="flex items-center justify-between p-3 bg-background rounded-lg border border-border hover:border-primary/50 transition-colors group"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className={`w-8 h-8 rounded-lg ${a.bg} flex items-center justify-center`}>
+                        <a.icon className={`w-4 h-4 ${a.color}`} />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-xs text-muted-foreground">{a.label}</p>
+                        <p className={`text-lg font-bold ${a.color}`}>{a.count}</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* KPI Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {statCards.map((s) => (
             <Card key={s.label}>
               <CardContent className="p-5">
@@ -101,11 +234,11 @@ const AdminDashboard = () => {
                   <div>
                     <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{s.label}</p>
                     <p className="text-2xl font-bold text-foreground mt-1">
-                      {loading ? "—" : s.value.toLocaleString()}
+                      {loading ? "—" : s.isString ? s.value : (s.value as number).toLocaleString()}
                     </p>
                   </div>
-                  <div className={`w-10 h-10 rounded-lg bg-muted flex items-center justify-center ${s.color}`}>
-                    <s.icon className="w-5 h-5" />
+                  <div className={`w-10 h-10 rounded-lg ${s.bg} flex items-center justify-center`}>
+                    <s.icon className={`w-5 h-5 ${s.color}`} />
                   </div>
                 </div>
               </CardContent>
@@ -113,80 +246,83 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        {/* Analytics Chart */}
-        <div className="grid grid-cols-1 gap-6">
-          <Card className="col-span-1">
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <div className="space-y-0.5">
-                <CardTitle className="text-lg font-bold tracking-tight">Growth Analytics</CardTitle>
-                <p className="text-xs text-muted-foreground">New signups vs Successful matches (Last 7 days)</p>
+              <div>
+                <CardTitle className="text-base font-semibold">Signup Trend</CardTitle>
+                <p className="text-xs text-muted-foreground">New registrations over time</p>
               </div>
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <TrendingUp className="w-4 h-4 text-primary" />
-              </div>
+              <TrendingUp className="w-4 h-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="h-[300px] w-full pt-4">
+              <div className="h-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={CHART_DATA}>
+                  <AreaChart data={chartData}>
                     <defs>
-                      <linearGradient id="colorSignups" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                      </linearGradient>
-                      <linearGradient id="colorMatches" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
+                      <linearGradient id="gSignups" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis 
-                      dataKey="name" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{fill: 'hsl(var(--muted-foreground))', fontSize: 12}}
-                    />
-                    <YAxis 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{fill: 'hsl(var(--muted-foreground))', fontSize: 12}}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        borderColor: 'hsl(var(--border))', 
-                        borderRadius: '0.75rem',
-                        fontSize: '12px'
-                      }}
-                      itemStyle={{ fontWeight: 'bold' }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="signups" 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={3}
-                      fillOpacity={1} 
-                      fill="url(#colorSignups)" 
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="matches" 
-                      stroke="hsl(var(--accent))" 
-                      strokeWidth={3}
-                      fillOpacity={1} 
-                      fill="url(#colorMatches)" 
-                    />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false}
+                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                    <YAxis axisLine={false} tickLine={false}
+                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                    <Tooltip contentStyle={{
+                      backgroundColor: "hsl(var(--card))", borderColor: "hsl(var(--border))",
+                      borderRadius: "0.75rem", fontSize: "12px",
+                    }} />
+                    <Area type="monotone" dataKey="signups" stroke="hsl(var(--primary))"
+                      strokeWidth={2} fillOpacity={1} fill="url(#gSignups)" />
                   </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div>
+                <CardTitle className="text-base font-semibold">Profile Completion</CardTitle>
+                <p className="text-xs text-muted-foreground">Complete vs incomplete vs verified</p>
+              </div>
+              <UserCheck className="w-4 h-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="h-[220px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={[
+                    { name: "Verified", count: stats.verifiedProfiles },
+                    { name: "Complete", count: stats.completeProfiles - stats.verifiedProfiles },
+                    { name: "Incomplete", count: stats.incompleteProfiles },
+                  ]}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false}
+                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                    <YAxis axisLine={false} tickLine={false}
+                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                    <Tooltip contentStyle={{
+                      backgroundColor: "hsl(var(--card))", borderColor: "hsl(var(--border))",
+                      borderRadius: "0.75rem", fontSize: "12px",
+                    }} />
+                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Recent Users */}
+        {/* Recent Signups */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Recent Signups</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base font-semibold">Recent Signups</CardTitle>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/admin/users")}>
+              View All <ArrowRight className="w-3 h-3 ml-1" />
+            </Button>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -205,20 +341,20 @@ const AdminDashboard = () => {
                         <p className="text-sm font-medium text-foreground">
                           {[u.first_name, u.last_name].filter(Boolean).join(" ") || "Unnamed"}
                         </p>
-                        <p className="text-xs text-muted-foreground">{u.location || "No location"}</p>
+                        <p className="text-xs text-muted-foreground">{u.location || "No location"} · {u.phone || "—"}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       {u.verified && (
-                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-secondary/10 text-secondary">Verified</span>
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-green-500/10 text-green-700">Verified</span>
                       )}
                       {u.profile_complete ? (
-                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent">Complete</span>
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-700">Complete</span>
                       ) : (
                         <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">Incomplete</span>
                       )}
                       <span className="text-[10px] text-muted-foreground">
-                        {new Date(u.created_at).toLocaleDateString()}
+                        {new Date(u.created_at).toLocaleDateString("en-IN")}
                       </span>
                     </div>
                   </div>

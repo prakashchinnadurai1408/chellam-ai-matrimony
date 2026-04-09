@@ -2,15 +2,8 @@ import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
-import {
-  LayoutDashboard, Users, Shield, MessageCircle, Settings,
-  LogOut, Heart, ChevronRight, Loader2,
-} from "lucide-react";
+import { LogOut, Heart, ChevronRight, Loader2, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-import { IndianRupee, Star } from "lucide-react";
-
-import { UserPlus } from "lucide-react";
 import { getSidebarLinks } from "@/config/rbac";
 
 const AdminLayout = ({ children }: { children: ReactNode }) => {
@@ -27,7 +20,6 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
     );
   }
 
-  // Access granted if the user is an admin or a moderator
   const hasAccess = isAdmin || isModerator;
 
   if (!user || !hasAccess) {
@@ -45,53 +37,78 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
 
   const sidebarLinks = getSidebarLinks(role);
 
+  // Group links by their group label
+  const groups: Record<string, typeof sidebarLinks> = {};
+  sidebarLinks.forEach(link => {
+    const g = link.group || "Other";
+    if (!groups[g]) groups[g] = [];
+    groups[g].push(link);
+  });
+
   return (
     <div className="min-h-screen flex bg-background">
       {/* Sidebar */}
-      <aside className="w-64 bg-card border-r border-border flex flex-col shrink-0">
-        <div className="h-16 flex items-center gap-2 px-5 border-b border-border">
-          <div className="w-8 h-8 rounded-lg gradient-hero flex items-center justify-center">
-            <Heart className="w-4 h-4 text-primary-foreground" />
+      <aside className="w-56 bg-card border-r border-border flex flex-col shrink-0">
+        {/* Logo */}
+        <div className="h-14 flex items-center gap-2 px-4 border-b border-border">
+          <div className="w-7 h-7 rounded-lg gradient-hero flex items-center justify-center">
+            <Heart className="w-3.5 h-3.5 text-primary-foreground" />
           </div>
-          <span className="font-display text-lg font-bold text-foreground">
+          <span className="font-display text-base font-bold text-foreground">
             Admin<span className="text-primary">.</span>
           </span>
+          {role && (
+            <span className="ml-auto text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+              {role}
+            </span>
+          )}
         </div>
 
-        <nav className="flex-1 py-4 px-3 space-y-1">
-          {sidebarLinks.map((link) => {
-            const isActive = location.pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                to={link.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                }`}
-              >
-                <link.icon className="w-4 h-4" />
-                {link.label}
-                {isActive && <ChevronRight className="w-3 h-3 ml-auto" />}
-              </Link>
-            );
-          })}
+        {/* Nav */}
+        <nav className="flex-1 py-3 px-2 overflow-y-auto space-y-4">
+          {Object.entries(groups).map(([groupLabel, links]) => (
+            <div key={groupLabel}>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 px-2 mb-1">
+                {groupLabel}
+              </p>
+              <div className="space-y-0.5">
+                {links.map(link => {
+                  const isActive = location.pathname === link.href;
+                  return (
+                    <Link
+                      key={link.href}
+                      to={link.href}
+                      className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-colors ${
+                        isActive
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      }`}
+                    >
+                      <link.icon className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">{link.label}</span>
+                      {isActive && <ChevronRight className="w-3 h-3 ml-auto shrink-0" />}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
-        <div className="p-3 border-t border-border">
+        {/* Footer */}
+        <div className="p-2 border-t border-border space-y-0.5">
           <Link
             to="/"
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
           >
-            <Heart className="w-4 h-4" />
+            <Heart className="w-3.5 h-3.5" />
             Back to Site
           </Link>
           <button
             onClick={() => { logout(); navigate("/"); }}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors"
+            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="w-3.5 h-3.5" />
             Logout
           </button>
         </div>
