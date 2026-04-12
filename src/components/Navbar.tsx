@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Heart, Menu, X, Sparkles, LogOut, User, MessageCircle, Shield } from "lucide-react";
+import { Heart, Menu, X, Sparkles, LogOut, User, MessageCircle, Shield, Bell, Eye, Settings } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -12,7 +12,7 @@ const navLinks = [
   { label: "Search", href: "/search" },
   { label: "Interests", href: "/interests", authOnly: true },
   { label: "Messages", href: "/messages", authOnly: true },
-  { label: "Membership", href: "/membership", authOnly: true },
+  { label: "Success Stories", href: "/success-stories" },
   { label: "How It Works", href: "#how-it-works" },
   { label: "Pricing", href: "#pricing" },
 ];
@@ -20,6 +20,7 @@ const navLinks = [
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [notifCount, setNotifCount] = useState(0);
   const { isAuthenticated, user, profile, logout } = useAuth();
   const { isAdmin } = useAdminRole(user?.id);
   const navigate = useNavigate();
@@ -28,7 +29,6 @@ const Navbar = () => {
   useEffect(() => {
     if (!user) { setUnreadCount(0); return; }
     const fetchUnread = async () => {
-      // Get all conversation IDs for this user
       const { data: convos } = await supabase
         .from("conversations")
         .select("id")
@@ -45,11 +45,33 @@ const Navbar = () => {
     };
     fetchUnread();
 
-    // Realtime subscription for new messages
     const channel = supabase
       .channel("navbar-unread")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
         fetchUnread();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
+  // Unread notification count
+  useEffect(() => {
+    if (!user) { setNotifCount(0); return; }
+    const fetchNotifCount = async () => {
+      const { count } = await supabase
+        .from("notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("read", false);
+      setNotifCount(count || 0);
+    };
+    fetchNotifCount();
+
+    const channel = supabase
+      .channel("navbar-notifs")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, () => {
+        fetchNotifCount();
       })
       .subscribe();
 
@@ -73,7 +95,7 @@ const Navbar = () => {
           </span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-6">
           {navLinks
             .filter((link) => !link.authOnly || isAuthenticated)
             .map((link) =>
@@ -102,9 +124,32 @@ const Navbar = () => {
           )}
         </div>
 
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-2">
           {isAuthenticated ? (
             <>
+              {/* Notification Bell */}
+              <Button variant="ghost" size="icon" className="relative" asChild>
+                <Link to="/notifications">
+                  <Bell className="w-4 h-4" />
+                  {notifCount > 0 && (
+                    <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
+                      {notifCount > 9 ? "9+" : notifCount}
+                    </span>
+                  )}
+                </Link>
+              </Button>
+              {/* Who Viewed Me */}
+              <Button variant="ghost" size="icon" asChild>
+                <Link to="/who-viewed-me">
+                  <Eye className="w-4 h-4" />
+                </Link>
+              </Button>
+              {/* Settings */}
+              <Button variant="ghost" size="icon" asChild>
+                <Link to="/settings">
+                  <Settings className="w-4 h-4" />
+                </Link>
+              </Button>
               {isAdmin && (
                 <Button variant="outline" size="sm" className="gap-1.5" asChild>
                   <Link to="/admin">
@@ -178,6 +223,24 @@ const Navbar = () => {
                     {link.label}
                   </a>
                 )
+              )}
+              {isAuthenticated && (
+                <>
+                  <Link to="/notifications" className="text-sm font-medium text-muted-foreground hover:text-foreground py-2 flex items-center gap-2" onClick={() => setMobileOpen(false)}>
+                    Notifications
+                    {notifCount > 0 && (
+                      <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                        {notifCount > 9 ? "9+" : notifCount}
+                      </span>
+                    )}
+                  </Link>
+                  <Link to="/who-viewed-me" className="text-sm font-medium text-muted-foreground hover:text-foreground py-2" onClick={() => setMobileOpen(false)}>
+                    Who Viewed Me
+                  </Link>
+                  <Link to="/settings" className="text-sm font-medium text-muted-foreground hover:text-foreground py-2" onClick={() => setMobileOpen(false)}>
+                    Settings
+                  </Link>
+                </>
               )}
               <div className="flex flex-col gap-2 pt-2 border-t border-border">
                 {isAuthenticated ? (
