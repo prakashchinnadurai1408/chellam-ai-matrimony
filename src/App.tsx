@@ -25,6 +25,10 @@ import AdminResetPassword from "./pages/admin/AdminResetPassword.tsx";
 import Membership from "./pages/Membership.tsx";
 import Interests from "./pages/Interests.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
+import WhoViewedMe from "./pages/WhoViewedMe.tsx";
+import Notifications from "./pages/Notifications.tsx";
+import Settings from "./pages/Settings.tsx";
+import SuccessStories from "./pages/SuccessStories.tsx";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +51,10 @@ const App = () => (
             <Route path="/preferences" element={<Preferences />} />
             <Route path="/membership" element={<Membership />} />
             <Route path="/interests" element={<Interests />} />
+            <Route path="/who-viewed-me" element={<WhoViewedMe />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/success-stories" element={<SuccessStories />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/moderation" element={<AdminModeration />} />

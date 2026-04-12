@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BlockButton, ReportDialog } from "@/components/BlockReportDialog";
 
 import profile1 from "@/assets/profile-1.jpg";
 import profile2 from "@/assets/profile-2.jpg";
@@ -210,6 +211,10 @@ const ProfileActions = ({ profileId, navigate }: { profileId: string; navigate: 
       {interest?.status === "accepted" && !isPremiumOrAbove && (
         <p className="text-xs text-center text-muted-foreground">Upgrade to <span className="text-primary font-medium cursor-pointer" onClick={() => navigate("/membership")}>Premium</span> to message</p>
       )}
+      <div className="flex gap-2 pt-1">
+        <BlockButton targetUserId={profileId} />
+        <ReportDialog targetUserId={profileId} />
+      </div>
     </div>
   );
 };
