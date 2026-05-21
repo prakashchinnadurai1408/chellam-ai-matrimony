@@ -1,7 +1,9 @@
-import { useState, useMemo, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useMembership } from "@/hooks/useMembership";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -16,68 +18,11 @@ import {
 import {
   Search, SlidersHorizontal, Sparkles, Shield, MapPin, GraduationCap,
   Briefcase, Heart, X, ChevronDown, ChevronUp, RotateCcw, Star, Moon,
-  Users, Filter
+  Users, Filter, Loader2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import profile1 from "@/assets/profile-1.jpg";
-import profile2 from "@/assets/profile-2.jpg";
-import profile3 from "@/assets/profile-3.jpg";
-import profile4 from "@/assets/profile-4.jpg";
-import profile5 from "@/assets/profile-5.jpg";
-import profile6 from "@/assets/profile-6.jpg";
-
-// ── Mock Data ──
-const allProfiles = [
-  {
-    id: 1, name: "Ananya Sharma", age: 27, gender: "Female", location: "Mumbai",
-    state: "Maharashtra", image: profile1, education: "MBA", educationDetail: "IIM Bangalore",
-    profession: "Product Manager", income: "15-20 LPA", matchScore: 96, verified: true,
-    community: "Hindu – Brahmin", religion: "Hindu", caste: "Brahmin",
-    rashi: "Mesha", nakshatra: "Ashwini", manglik: false, gunaScore: 28,
-    height: "5'5\"", maritalStatus: "Never Married",
-  },
-  {
-    id: 2, name: "Arjun Menon", age: 29, gender: "Male", location: "Bangalore",
-    state: "Karnataka", image: profile2, education: "B.Tech", educationDetail: "IIT Madras",
-    profession: "Software Engineer", income: "25-30 LPA", matchScore: 91, verified: true,
-    community: "Hindu – Nair", religion: "Hindu", caste: "Nair",
-    rashi: "Vrishabha", nakshatra: "Rohini", manglik: false, gunaScore: 25,
-    height: "5'10\"", maritalStatus: "Never Married",
-  },
-  {
-    id: 3, name: "Priya Iyer", age: 25, gender: "Female", location: "Chennai",
-    state: "Tamil Nadu", image: profile3, education: "MBBS", educationDetail: "AIIMS",
-    profession: "Doctor", income: "12-15 LPA", matchScore: 89, verified: true,
-    community: "Hindu – Iyengar", religion: "Hindu", caste: "Iyengar",
-    rashi: "Kanya", nakshatra: "Hasta", manglik: true, gunaScore: 30,
-    height: "5'3\"", maritalStatus: "Never Married",
-  },
-  {
-    id: 4, name: "Vikram Reddy", age: 31, gender: "Male", location: "Hyderabad",
-    state: "Telangana", image: profile4, education: "MS", educationDetail: "Stanford",
-    profession: "Data Scientist", income: "40-50 LPA", matchScore: 87, verified: true,
-    community: "Hindu – Reddy", religion: "Hindu", caste: "Reddy",
-    rashi: "Simha", nakshatra: "Magha", manglik: false, gunaScore: 22,
-    height: "5'11\"", maritalStatus: "Never Married",
-  },
-  {
-    id: 5, name: "Meera Krishnan", age: 28, gender: "Female", location: "Coimbatore",
-    state: "Tamil Nadu", image: profile5, education: "CA", educationDetail: "ICAI",
-    profession: "Finance Manager", income: "18-22 LPA", matchScore: 93, verified: true,
-    community: "Hindu – Mudaliar", religion: "Hindu", caste: "Mudaliar",
-    rashi: "Thula", nakshatra: "Swati", manglik: false, gunaScore: 26,
-    height: "5'4\"", maritalStatus: "Never Married",
-  },
-  {
-    id: 6, name: "Rahul Nair", age: 30, gender: "Male", location: "Kochi",
-    state: "Kerala", image: profile6, education: "MBA", educationDetail: "ISB Hyderabad",
-    profession: "Entrepreneur", income: "30-40 LPA", matchScore: 85, verified: true,
-    community: "Hindu – Nair", religion: "Hindu", caste: "Nair",
-    rashi: "Dhanu", nakshatra: "Moola", manglik: true, gunaScore: 24,
-    height: "6'0\"", maritalStatus: "Divorced",
-  },
-];
 
 const religions = ["Hindu", "Muslim", "Christian", "Sikh", "Jain", "Buddhist"];
 const castes = ["Brahmin", "Nair", "Iyengar", "Reddy", "Mudaliar", "Gounder", "Naidu", "Iyer"];
@@ -87,6 +32,37 @@ const states = ["Maharashtra", "Karnataka", "Tamil Nadu", "Telangana", "Kerala",
 const rashis = ["Mesha", "Vrishabha", "Mithuna", "Karka", "Simha", "Kanya", "Thula", "Vrischika", "Dhanu", "Makara", "Kumbha", "Meena"];
 const nakshatras = ["Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra", "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni", "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha", "Jyeshtha", "Moola", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta", "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"];
 const maritalStatuses = ["Never Married", "Divorced", "Widowed", "Awaiting Divorce"];
+type SearchProfile = {
+  id: string;
+  name: string;
+  age: number;
+  gender: string;
+  location: string;
+  state: string;
+  image: string;
+  education: string;
+  educationDetail: string;
+  profession: string;
+  income: string;
+  matchScore: number;
+  verified: boolean;
+  community: string;
+  religion: string;
+  caste: string;
+  rashi: string;
+  nakshatra: string;
+  manglik: boolean;
+  gunaScore: number;
+  height: string;
+  maritalStatus: string;
+  isDbProfile: boolean;
+  insights?: string[];
+};
+
+type AiMatchResponse = {
+  matches: Array<{ profile_id: string; score: number; insights: string[] }>;
+};
+
 const sortOptions = [
   { value: "match", label: "Best Match" },
   { value: "newest", label: "Newest First" },
@@ -95,7 +71,12 @@ const sortOptions = [
 ];
 
 const SearchPage = () => {
-  const [dbProfiles, setDbProfiles] = useState<any[]>([]);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { membership, loading: membershipLoading, isPremiumOrAbove } = useMembership(user?.id);
+  const [dbProfiles, setDbProfiles] = useState<SearchProfile[]>([]);
+  const [dailyMatches, setDailyMatches] = useState<Record<string, { score: number; insights: string[] }>>({});
+  const canRunAi = !!user && isPremiumOrAbove;
   const [loadingDb, setLoadingDb] = useState(true);
   const [aiInsights, setAiInsights] = useState<Record<string, string[]>>({});
   const [matchingInProgress, setMatchingInProgress] = useState(false);
@@ -105,6 +86,25 @@ const SearchPage = () => {
   const [sortBy, setSortBy] = useState("match");
 
   // Fetch real profiles from DB
+  const loadDailyMatches = useCallback(async () => {
+    if (!user) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const { data } = await supabase
+      .from("daily_matches")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("match_date", today);
+    if (!data) return;
+    const map = data.reduce((acc: Record<string, { score: number; insights: string[] }>, item) => {
+      acc[item.match_user_id] = {
+        score: item.compatibility_score,
+        insights: Array.isArray(item.match_reasons) ? item.match_reasons : [],
+      };
+      return acc;
+    }, {});
+    setDailyMatches(map);
+  }, [user]);
+
   useEffect(() => {
     const fetchProfiles = async () => {
       const { data } = await supabase
@@ -112,7 +112,7 @@ const SearchPage = () => {
         .select("*")
         .eq("profile_complete", true);
       if (data) {
-        const mapped = data.map((p) => {
+        const mapped = data.map((p): SearchProfile => {
           const age = p.date_of_birth
             ? Math.floor((Date.now() - new Date(p.date_of_birth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
             : 25;
@@ -149,20 +149,26 @@ const SearchPage = () => {
     fetchProfiles();
   }, []);
 
+  useEffect(() => {
+    loadDailyMatches();
+  }, [user, loadDailyMatches]);
+
   // Run AI matching
   const runAiMatching = async () => {
+    if (!user) {
+      toast.error("Sign in to run AI matching");
+      return;
+    }
+
     setMatchingInProgress(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        console.warn("Not logged in, skipping AI matching");
-        return;
-      }
       const { data, error } = await supabase.functions.invoke("ai-match", {});
       if (error) {
         console.error("AI matching error:", error);
+        toast.error("AI matching failed. Please try again later.");
         return;
       }
+
       const matches = data?.matches || [];
       const insightsMap: Record<string, string[]> = {};
       const updatedDbProfiles = dbProfiles.map((p) => {
@@ -175,15 +181,23 @@ const SearchPage = () => {
       });
       setDbProfiles(updatedDbProfiles);
       setAiInsights(insightsMap);
+      await loadDailyMatches();
     } catch (e) {
       console.error("AI matching failed:", e);
+      toast.error("AI matching failed. Please try again later.");
     } finally {
       setMatchingInProgress(false);
     }
   };
 
-  // Combine DB profiles with mock data
-  const combinedProfiles = useMemo(() => [...dbProfiles, ...allProfiles], [dbProfiles]);
+  const combinedProfiles = useMemo(() => dbProfiles.map((p) => {
+    const cached = dailyMatches[p.id];
+    return {
+      ...p,
+      matchScore: cached?.score ?? p.matchScore,
+      insights: cached?.insights ?? aiInsights[p.id] ?? [],
+    };
+  }), [dbProfiles, dailyMatches, aiInsights]);
 
   // Filters
   const [ageRange, setAgeRange] = useState([21, 35]);
@@ -327,6 +341,31 @@ const SearchPage = () => {
             <p className="text-muted-foreground max-w-lg">
               Use our intelligent filters to discover compatible profiles. AI scores update in real-time as you refine your preferences.
             </p>
+                  <p className="text-sm text-muted-foreground mt-3">
+              {membershipLoading ? (
+                "Checking membership status..."
+              ) : user ? (
+                isPremiumOrAbove ? (
+                  "Your premium membership unlocks advanced AI recommendations and full access to matches."
+                ) : (
+                  "Free members can browse profiles and see basic compatibility. Upgrade to Premium for advanced AI match insights and priority access."
+                )
+              ) : (
+                "Sign in to save preferences, receive daily AI matches, and unlock premium recommendations."
+              )}
+            </p>
+            {Object.keys(dailyMatches).length > 0 && (
+              <>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Showing {Object.keys(dailyMatches).length} daily AI match{Object.keys(dailyMatches).length === 1 ? "" : "es"} for today.
+                </p>
+                {user && membership?.tier === "free" && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Upgrade to Premium to unlock full match details and AI insights.
+                  </p>
+                )}
+              </>
+            )}
           </div>
 
           {/* Search Bar */}
@@ -410,7 +449,7 @@ const SearchPage = () => {
                         <Select value={selectedReligion} onValueChange={setSelectedReligion}>
                           <SelectTrigger><SelectValue placeholder="Any Religion" /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="any">Any</SelectItem>
+                            <SelectItem value="">Any</SelectItem>
                             {religions.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
                           </SelectContent>
                         </Select>
@@ -441,7 +480,7 @@ const SearchPage = () => {
                         <Select value={selectedMarital} onValueChange={setSelectedMarital}>
                           <SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="any">Any</SelectItem>
+                            <SelectItem value="">Any</SelectItem>
                             {maritalStatuses.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                           </SelectContent>
                         </Select>
@@ -471,7 +510,7 @@ const SearchPage = () => {
                             <Select value={selectedRashi} onValueChange={setSelectedRashi}>
                               <SelectTrigger><SelectValue placeholder="Any Rashi" /></SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="any">Any</SelectItem>
+                                <SelectItem value="">Any</SelectItem>
                                 {rashis.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
                               </SelectContent>
                             </Select>
@@ -481,7 +520,7 @@ const SearchPage = () => {
                             <Select value={selectedNakshatra} onValueChange={setSelectedNakshatra}>
                               <SelectTrigger><SelectValue placeholder="Any Nakshatra" /></SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="any">Any</SelectItem>
+                                <SelectItem value="">Any</SelectItem>
                                 {nakshatras.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
                               </SelectContent>
                             </Select>
@@ -491,7 +530,7 @@ const SearchPage = () => {
                             <Select value={manglikFilter} onValueChange={setManglikFilter}>
                               <SelectTrigger><SelectValue placeholder="Doesn't Matter" /></SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="any">Doesn't Matter</SelectItem>
+                                <SelectItem value="">Doesn't Matter</SelectItem>
                                 <SelectItem value="yes">Manglik</SelectItem>
                                 <SelectItem value="no">Non-Manglik</SelectItem>
                               </SelectContent>
@@ -518,17 +557,26 @@ const SearchPage = () => {
                 </p>
                 <div className="flex items-center gap-2">
                   <Button
-                    variant="hero"
+                    variant={canRunAi ? "hero" : "outline"}
                     size="sm"
                     className="gap-2"
                     onClick={() => {
+                      if (!user) {
+                        navigate("/auth");
+                        return;
+                      }
+                      if (!canRunAi) {
+                        toast.error("Upgrade to Premium to run advanced AI match analysis.");
+                        navigate("/membership");
+                        return;
+                      }
                       runAiMatching();
                       toast.info("Running AI compatibility analysis...");
                     }}
-                    disabled={matchingInProgress}
+                    disabled={matchingInProgress || !canRunAi}
                   >
                     <Sparkles className="w-3.5 h-3.5" />
-                    {matchingInProgress ? "Analyzing…" : "AI Match"}
+                    {matchingInProgress ? "Analyzing…" : canRunAi ? "AI Match" : "Premium AI"}
                   </Button>
                   <Button
                     variant="ghost"
@@ -542,7 +590,11 @@ const SearchPage = () => {
                 </div>
               </div>
 
-              {filtered.length === 0 ? (
+              {loadingDb ? (
+                <div className="flex justify-center py-20">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              ) : filtered.length === 0 ? (
                 <div className="text-center py-20 bg-card rounded-2xl border border-border/50">
                   <Search className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
                   <h3 className="font-display text-xl font-semibold text-foreground mb-2">No matches found</h3>
@@ -628,12 +680,12 @@ const SearchPage = () => {
                         </div>
 
                         {/* AI Insights */}
-                        {aiInsights[profile.id] && aiInsights[profile.id].length > 0 && (
+                                  {profile.insights && profile.insights.length > 0 && (
                           <div className="mb-3 p-2.5 rounded-xl bg-accent/5 border border-accent/10">
                             <p className="text-[10px] font-semibold text-accent flex items-center gap-1 mb-1.5">
                               <Sparkles className="w-3 h-3" /> AI Insights
                             </p>
-                            {aiInsights[profile.id].map((insight, idx) => (
+                            {profile.insights.map((insight: string, idx: number) => (
                               <p key={idx} className="text-[11px] text-muted-foreground mb-0.5">• {insight}</p>
                             ))}
                           </div>

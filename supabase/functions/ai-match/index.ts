@@ -70,6 +70,25 @@ serve(async (req) => {
       });
     }
 
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: cachedMatches } = await supabase
+      .from("daily_matches")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("match_date", today);
+
+    if (cachedMatches && cachedMatches.length > 0) {
+      const matches = cachedMatches.map((row) => ({
+        profile_id: row.match_user_id,
+        score: row.compatibility_score,
+        insights: Array.isArray(row.match_reasons) ? row.match_reasons : [],
+      }));
+
+      return new Response(JSON.stringify({ matches }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Build prompt for AI
     const myProfileSummary = JSON.stringify({
       age: myProfile.date_of_birth
@@ -239,6 +258,25 @@ Candidates: ${JSON.stringify(candidateSummaries)}`;
         .from("profiles")
         .update({ match_score: Math.round(match.score) })
         .eq("id", match.profile_id);
+    }
+
+    // Cache daily matches for the current user
+    await supabase
+      .from("daily_matches")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("match_date", today);
+
+    if (matches.length > 0) {
+      await supabase.from("daily_matches").insert(
+        matches.map((match) => ({
+          user_id: user.id,
+          match_user_id: match.profile_id,
+          compatibility_score: Math.round(match.score),
+          match_date: today,
+          match_reasons: match.insights || [],
+        }))
+      );
     }
 
     return new Response(JSON.stringify({ matches }), {

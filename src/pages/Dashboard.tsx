@@ -86,45 +86,64 @@ const Dashboard = () => {
     const scored = candidates.map((c) => {
       let score = 50; // base
       const reasons: string[] = [];
+      const age = c.date_of_birth
+        ? Math.floor((Date.now() - new Date(c.date_of_birth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+        : null;
 
       // Age match
-      if (c.date_of_birth && myPrefs) {
-        const age = Math.floor((Date.now() - new Date(c.date_of_birth).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
-        if ((!myPrefs.min_age || age >= myPrefs.min_age) && (!myPrefs.max_age || age <= myPrefs.max_age)) {
+      if (age !== null && myPrefs) {
+        const withinAge = (!myPrefs.min_age || age >= myPrefs.min_age) && (!myPrefs.max_age || age <= myPrefs.max_age);
+        if (withinAge) {
           score += 15;
-          reasons.push("Age match");
+          reasons.push("Age within preference");
+        } else {
+          score -= 10;
+          reasons.push("Outside preferred age range");
         }
       }
 
       // Religion match
       if (myPrefs?.preferred_religion && c.religion === myPrefs.preferred_religion) {
         score += 15;
-        reasons.push("Same religion");
+        reasons.push("Religion preference matched");
       }
 
       // Community match
       if (myPrefs?.preferred_communities?.includes(c.community)) {
         score += 10;
-        reasons.push("Community match");
+        reasons.push("Community preference matched");
       }
 
       // Education match
       if (myPrefs?.preferred_education?.includes(c.education)) {
         score += 10;
-        reasons.push("Education match");
+        reasons.push("Education preference matched");
+      }
+
+      // Marital status match
+      if (myPrefs?.preferred_marital_status && c.marital_status === myPrefs.preferred_marital_status) {
+        score += 10;
+        reasons.push("Preferred marital status matched");
       }
 
       // Location match
       if (myPrefs?.preferred_locations?.includes(c.location) || myProfile?.state === c.state) {
         score += 10;
-        reasons.push("Location match");
+        reasons.push("Location compatibility");
       }
 
-      // Profile completeness bonus
-      if (c.photo_url) { score += 5; reasons.push("Has photo"); }
-      if (c.verified) { score += 5; reasons.push("Verified"); }
+      // Family values
+      if (myProfile?.family_values && c.family_values && myProfile.family_values === c.family_values) {
+        score += 10;
+        reasons.push("Family values alignment");
+      }
 
-      return { candidate: c, score: Math.min(score, 99), reasons };
+      // Profile quality bonus
+      if (c.photo_url) { score += 5; reasons.push("Has profile photo"); }
+      if (c.verified) { score += 5; reasons.push("Verified member"); }
+      if ((c as any).match_score >= 80) { score += 5; reasons.push("High AI match score"); }
+
+      return { candidate: c, score: Math.min(Math.max(score, 0), 99), reasons };
     });
 
     // Sort and take top 10

@@ -74,10 +74,11 @@ const Interests = () => {
   // Realtime for interests
   useEffect(() => {
     if (!user) return;
-    const channel = supabase
-      .channel("interests-realtime")
+    const channel = supabase.channel("interests-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "interests" }, () => { fetchAll(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "shortlists" }, () => { fetchAll(); })
       .subscribe();
+
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 

@@ -205,12 +205,37 @@ const MessagesPage = () => {
               .eq("id", newMsg.id)
               .then(() => {});
           }
+
+          // Keep the conversations overview in sync when the active conversation updates.
+          fetchConversations();
         }
       )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [activeConversation, user]);
+  }, [activeConversation, user, fetchConversations]);
+
+  // Global messages listener to refresh conversations list when any message is created
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`messages-global-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        (payload) => {
+          const newMsg = payload.new as Message;
+          // If the message belongs to the active conversation, it will be handled by the per-conversation listener.
+          // Otherwise refresh conversations so unread counts and ordering update.
+          if (newMsg.conversation_id !== activeConversation) {
+            fetchConversations();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user, activeConversation, fetchConversations]);
 
   useEffect(scrollToBottom, [messages]);
 
@@ -227,6 +252,8 @@ const MessagesPage = () => {
     } else {
       setNewMessage("");
       inputRef.current?.focus();
+      // Refresh conversations so the sent message updates the list (last message, ordering)
+      await fetchConversations();
     }
     setSending(false);
   };

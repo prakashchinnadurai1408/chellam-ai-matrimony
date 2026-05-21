@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .select("*")
       .eq("user_id", userId)
       .single();
-    if (data) setProfile(data as ProfileData);
+    setProfile(data ? (data as ProfileData) : null);
     return data;
   };
 
@@ -130,15 +130,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const completeProfile = async (data: Partial<ProfileData>) => {
     if (!user) return;
 
-    const { error } = await supabase
+    const { data: existing } = await supabase
       .from("profiles")
-      .update({
-        ...data,
-        profile_complete: true,
-      })
-      .eq("user_id", user.id);
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-    if (error) throw error;
+    if (existing) {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          ...data,
+          profile_complete: true,
+        })
+        .eq("user_id", user.id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase
+        .from("profiles")
+        .insert({
+          user_id: user.id,
+          ...data,
+          profile_complete: true,
+        });
+      if (error) throw error;
+    }
+
     await fetchProfile(user.id);
   };
 

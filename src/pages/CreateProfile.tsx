@@ -120,11 +120,51 @@ const CreateProfile = () => {
         .from("profile-photos")
         .getPublicUrl(path);
       return publicUrl;
-    } catch (err: any) {
-      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Upload failed";
+      toast({ title: "Upload failed", description: message, variant: "destructive" });
       return null;
     } finally {
       setUploadingPhoto(false);
+    }
+  };
+
+  const savePartnerPreferences = async () => {
+    if (!user) return;
+
+    const preferences = {
+      user_id: user.id,
+      min_age: form.partner_age_min ? Number(form.partner_age_min) : 21,
+      max_age: form.partner_age_max ? Number(form.partner_age_max) : 35,
+      preferred_religion: null,
+      preferred_communities:
+        form.partner_community && form.partner_community !== "Open to all"
+          ? [form.partner_community]
+          : null,
+      preferred_education: form.partner_education ? [form.partner_education] : null,
+      preferred_locations: form.partner_location ? [form.partner_location] : null,
+      preferred_marital_status: null,
+      min_height: null,
+      max_height: null,
+    };
+
+    const { data: existingPref } = await supabase
+      .from("partner_preferences")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (existingPref) {
+      const { error } = await supabase
+        .from("partner_preferences")
+        .update(preferences)
+        .eq("user_id", user.id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase
+        .from("partner_preferences")
+        .insert(preferences);
+      if (error) throw error;
     }
   };
 
@@ -173,10 +213,12 @@ const CreateProfile = () => {
         family_values: form.family_values,
         ...(photoUrl ? { photo_url: photoUrl } : {}),
       });
+      await savePartnerPreferences();
       toast({ title: "Profile Created! 🎉", description: "Welcome to Chellam Matrimony" });
       navigate("/");
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Could not save your profile";
+      toast({ title: "Error", description: message, variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
